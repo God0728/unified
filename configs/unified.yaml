@@ -1,0 +1,107 @@
+# ============================================================
+# Unified Transition Diffusion Model - Configuration
+# ============================================================
+# Based on: UWM (arXiv:2504.02792) + CompDiffuser (arXiv:2503.05153)
+# ============================================================
+
+# --- Data Representation ---
+# Each configuration (config) has 22 dimensions:
+#   left_foot:  6D (3D position + 3D orientation)  - plane contact
+#   right_foot: 6D (3D position + 3D orientation)  - plane contact
+#   left_hand:  3D (3D position)                   - point contact
+#   right_hand: 3D (3D position)                   - point contact
+#   contacts:   4D (boolean: LF, RF, LH, RH)
+# A transition = (initial_config, final_config) = (22D, 22D) = 44D total
+
+data:
+  # Dimension breakdown
+  left_foot_dim: 6      # pos(3) + orient(3)
+  right_foot_dim: 6     # pos(3) + orient(3)
+  left_hand_dim: 3      # pos(3)
+  right_hand_dim: 3     # pos(3)
+  contact_dim: 4        # LF, RF, LH, RH booleans
+  config_dim: 22        # total per config
+  transition_dim: 44    # initial(22) + final(22)
+
+  # Effector slicing indices within a config (22D)
+  slices:
+    left_foot:  [0, 6]
+    right_foot: [6, 12]
+    left_hand:  [12, 15]
+    right_hand: [15, 18]
+    contacts:   [18, 22]
+
+  # Normalization
+  normalize: true
+
+# --- Model Architecture ---
+model:
+  architecture: "transformer"   # "transformer" or "mlp"
+
+  # Transformer config
+  hidden_dim: 256
+  num_heads: 8
+  num_layers: 6
+  dropout: 0.1
+  time_embed_dim: 128
+
+  # MLP config (fallback)
+  mlp_hidden_dims: [512, 512, 512, 512]
+
+  # Overlap conditioning (stgl-style)
+  ovlp_feat_dim: 64           # dimension of overlap state encoder + inpaint token
+
+# --- Diffusion Process ---
+diffusion:
+  num_timesteps: 1000
+  beta_start: 0.0001
+  beta_end: 0.02
+  beta_schedule: "cosine"     # "linear" or "cosine"
+  prediction_type: "epsilon"  # "epsilon" or "x0"
+
+  # DDIM sampling
+  use_ddim: true
+  ddim_steps: 50
+
+# --- Training ---
+training:
+  batch_size: 256
+  learning_rate: 1.0e-4
+  weight_decay: 1.0e-6
+  num_epochs: 2000
+  warmup_steps: 500
+
+  # Loss weights (UWM style)
+  w_initial: 1.0
+  w_final: 1.0
+
+  # Conditioning probabilities (stgl style)
+  # Per side: first drop with tr_1side_drop_prob, then split remaining into overlap/inpainting
+  tr_1side_drop_prob: 0.15
+  tr_ovlp_prob: 0.5      # among non-dropped: overlap (noisy conditioning)
+  tr_inpat_prob: 0.5     # among non-dropped: inpainting (clean conditioning, loss=0)
+  tr_no_ovlp_none: false # optional stgl heuristic: remove overlap if the opposite side is fully dropped
+  non_repla_inpat_prob: 0.5  # among those removed overlaps, probability of converting to inpainting
+
+  # EMA
+  use_ema: true
+  ema_decay: 0.9999
+
+  # Logging
+  log_interval: 50
+  save_interval: 200
+  eval_interval: 200
+
+# --- Inference / Sampling ---
+sampling:
+  # Single transition sampling
+  guidance_scale: 2.0
+
+  # Chain planning (CompDiffuser style)
+  chain:
+    num_transitions: 3          # K transitions in the chain
+    constraint_weight: 0.5      # Weight for averaging at overlap points
+    # Autoregressive vs parallel
+    mode: "parallel"            # "parallel" or "autoregressive"
+
+  num_samples: 16

@@ -1,0 +1,76 @@
+
+# ============================================================
+# Unified Transition Diffusion Model - Configuration (2080Ti)
+# ============================================================
+# Optimized for RTX 2080 Ti (11GB) with merged 3000-pair dataset
+# Larger model + bigger batch vs. default config
+# ============================================================
+
+data:
+  left_foot_dim: 6
+  right_foot_dim: 6
+  left_hand_dim: 3
+  right_hand_dim: 3
+  contact_dim: 4
+  config_dim: 16
+  transition_dim: 44
+
+  slices:
+    left_foot:  [0, 6]
+    right_foot: [6, 12]
+    left_hand:  [12, 15]
+    right_hand: [15, 18]
+    contacts:   [18, 22]
+
+  normalize: true
+
+# --- Model Architecture (larger than default) ---
+model:
+  architecture: "mlp"
+
+  # default: 256/8/6 → now: 384/8/8 (~2.5x more params)
+  hidden_dim: 384
+  num_heads: 8
+  num_layers: 8
+  dropout: 0.1
+  time_embed_dim: 192
+
+  mlp_hidden_dims: [768, 768, 768, 768]
+
+# --- Diffusion Process ---
+diffusion:
+  num_timesteps: 1000
+  beta_start: 0.0001
+  beta_end: 0.02
+  beta_schedule: "cosine"
+  prediction_type: "epsilon"
+
+  use_ddim: true
+  ddim_steps: 50
+
+# --- Training (bigger batch, more epochs for 3000 pairs) ---
+training:
+  batch_size: 512
+  learning_rate: 2.0e-4
+  weight_decay: 1.0e-5
+  num_epochs: 3000
+  warmup_steps: 1000
+
+  w_initial: 1.0
+  w_final: 1.0
+  p_uncond: 0.1
+
+  use_ema: true
+  ema_decay: 0.9999
+
+  log_interval: 50
+  save_interval: 200
+  eval_interval: 200
+
+# --- Inference / Sampling ---
+sampling:
+  guidance_scale: 2.0
+  chain:
+    num_transitions: 3
+    constraint_weight: 0.5
+    mode: "parallel"
