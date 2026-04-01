@@ -36,5 +36,7 @@ class MlP(nn.Module):
 
             if config['use_dpout'] and i < len(layer_dim) - 2:
                 module_list.append( nn.Dropout(p=config['prob_dpout']), )
-
-        
+                
+        self.encoder = nn.Sequential(*module_list)
+        self.output_init = nn.Linear(layer_dim[-1], output_dim)
+        self.output_final = nn.Linear(layer_dim[-1], output_dim)
