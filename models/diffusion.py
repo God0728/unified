@@ -199,6 +199,64 @@ class UnifiedTransitionDiffusion(nn.Module):
         }
 
     # ================================================================
+    # Helpers: CFG prediction + denoising step
+    # ================================================================
+
+    def _ddim_timesteps(self, ddim_steps: int, device: torch.device) -> torch.Tensor:
+        """DDIM timestep schedule following stgl's ddim_set_timesteps."""
+        step_ratio = self.num_timesteps // ddim_steps
+        ts = (np.arange(0, ddim_steps) * step_ratio).round()[::-1].copy().astype(np.int64)
+        return torch.from_numpy(ts).long().to(device)
+
+    def _cfg_predict(
+        self,
+        initial: torch.Tensor,
+        final: torch.Tensor,
+        t_init: torch.Tensor,
+        t_final: torch.Tensor,
+        tj_cond: dict,
+        guidance_scale: float,
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        """
+        Predict noise with classifier-free guidance, following stgl's pattern.
+
+        stgl duplicates the batch: 1st half = conditional, 2nd half = force_dropout.
+        Here we use two forward passes (conditional + unconditional) then combine:
+            eps = eps_uncond + w * (eps_cond - eps_uncond)
+        """
+        eps_init_cond, eps_final_cond = self.denoiser(
+            initial, final, t_init, t_final, tj_cond=tj_cond
+        )
+        if guidance_scale == 1.0:
+            return eps_init_cond, eps_final_cond
+
+        # Unconditional: same inputs & timesteps, all condition features zeroed
+        eps_init_uncond, eps_final_uncond = self.denoiser(
+            initial, final, t_init, t_final, tj_cond=None
+        )
+        eps_init = eps_init_uncond + guidance_scale * (eps_init_cond - eps_init_uncond)
+        eps_final = eps_final_uncond + guidance_scale * (eps_final_cond - eps_final_uncond)
+        return eps_init, eps_final
+
+    def _step(
+        self,
+        x_t: torch.Tensor,
+        t_current: int,
+        t_next: int,
+        eps_pred: torch.Tensor,
+        use_ddim: bool,
+        device: torch.device,
+    ) -> torch.Tensor:
+        """One denoising step: DDIM or DDPM."""
+        B = x_t.shape[0]
+        t_cur = torch.full((B,), t_current, dtype=torch.long, device=device)
+        if use_ddim:
+            t_nxt = torch.full((B,), t_next, dtype=torch.long, device=device)
+            return self.noise_schedule.ddim_step(x_t, t_cur, t_nxt, eps_pred)
+        else:
+            return self.noise_schedule.p_sample_ddpm(x_t, t_cur, eps_pred)
+
+    # ================================================================
     # Single Transition Sampling
     # ================================================================
 
@@ -255,22 +313,26 @@ class UnifiedTransitionDiffusion(nn.Module):
         if not denoise_final:
             final_t = condition_final.clone()
 
-        # Setup timestep schedule
+        # Setup timestep schedule (following stgl)
         if use_ddim:
-            timesteps = torch.linspace(self.num_timesteps - 1, 0, ddim_steps + 1, dtype=torch.long, device=device)
+            time_schedule = self._ddim_timesteps(ddim_steps, device)
+            step_size = self.num_timesteps // ddim_steps
         else:
-            timesteps = torch.arange(self.num_timesteps - 1, -1, -1, device=device)
+            time_schedule = torch.arange(self.num_timesteps - 1, -1, -1, device=device)
+            step_size = 1
 
-        for i in range(len(timesteps) - 1):
-            t_current = timesteps[i]
-            t_next = timesteps[i + 1]
+        for idx in range(len(time_schedule)):
+            t_current = time_schedule[idx].item()
+            t_next = t_current - step_size
 
-            # Build timestep tensors
-            # For conditioned parts: t=0 (clean), for denoised parts: t=t_current
-            t_init_tensor = torch.full((B,), t_current.item(), dtype=torch.long, device=device) if denoise_init else torch.zeros(B, dtype=torch.long, device=device)
-            t_final_tensor = torch.full((B,), t_current.item(), dtype=torch.long, device=device) if denoise_final else torch.zeros(B, dtype=torch.long, device=device)
+            t_init_tensor = (torch.full((B,), t_current, dtype=torch.long, device=device)
+                             if denoise_init
+                             else torch.zeros(B, dtype=torch.long, device=device))
+            t_final_tensor = (torch.full((B,), t_current, dtype=torch.long, device=device)
+                              if denoise_final
+                              else torch.zeros(B, dtype=torch.long, device=device))
 
-            # Build inference tj_cond: conditioned sides use inpaint tokens
+            # Conditioned sides → inpaint token; denoised sides → no condition
             zero_state = torch.zeros(B, self.config_dim, device=device)
             zero_t = torch.zeros(B, dtype=torch.long, device=device)
             tj_cond = {
@@ -284,48 +346,17 @@ class UnifiedTransitionDiffusion(nn.Module):
                 'final_cd_use_inpat': torch.full((B,), not denoise_final, dtype=torch.bool, device=device),
             }
 
-            # Predict noise
-            eps_init_pred, eps_final_pred = self.denoiser(
-                initial_t, final_t, t_init_tensor, t_final_tensor, tj_cond=tj_cond
+            # Predict noise with CFG (stgl: cond vs uncond → combine)
+            eps_init_pred, eps_final_pred = self._cfg_predict(
+                initial_t, final_t, t_init_tensor, t_final_tensor,
+                tj_cond, guidance_scale,
             )
-
-            # Classifier-free guidance (stgl-style: same inputs, zero condition features)
-            # Source (stgl) duplicates the batch with force_dropout=True, half_fd=True:
-            #   first half keeps overlap features, second half zeros them out.
-            # Here we achieve the same by running the denoiser twice:
-            #   conditional (with tj_cond) vs unconditional (tj_cond=None → all zeros).
-            # IMPORTANT: unconditional branch uses the SAME inputs & timesteps,
-            #   including clean data at t=0 for conditioned sides. Only the
-            #   condition features (overlap/inpaint tokens) are zeroed.
-            if guidance_scale != 1.0 and (not denoise_init or not denoise_final):
-                eps_init_uncond, eps_final_uncond = self.denoiser(
-                    initial_t, final_t, t_init_tensor, t_final_tensor, tj_cond=None
-                )
-
-                # Apply guidance only to denoised sides
-                if denoise_init:
-                    eps_init_pred = eps_init_uncond + guidance_scale * (eps_init_pred - eps_init_uncond)
-                if denoise_final:
-                    eps_final_pred = eps_final_uncond + guidance_scale * (eps_final_pred - eps_final_uncond)
 
             # Denoise step
             if denoise_init:
-                if use_ddim:
-                    t_cur = torch.full((B,), t_current.item(), dtype=torch.long, device=device)
-                    t_nxt = torch.full((B,), t_next.item(), dtype=torch.long, device=device)
-                    initial_t = self.noise_schedule.ddim_step(initial_t, t_cur, t_nxt, eps_init_pred)
-                else:
-                    t_cur = torch.full((B,), t_current.item(), dtype=torch.long, device=device)
-                    initial_t = self.noise_schedule.p_sample_ddpm(initial_t, t_cur, eps_init_pred)
-
+                initial_t = self._step(initial_t, t_current, t_next, eps_init_pred, use_ddim, device)
             if denoise_final:
-                if use_ddim:
-                    t_cur = torch.full((B,), t_current.item(), dtype=torch.long, device=device)
-                    t_nxt = torch.full((B,), t_next.item(), dtype=torch.long, device=device)
-                    final_t = self.noise_schedule.ddim_step(final_t, t_cur, t_nxt, eps_final_pred)
-                else:
-                    t_cur = torch.full((B,), t_current.item(), dtype=torch.long, device=device)
-                    final_t = self.noise_schedule.p_sample_ddpm(final_t, t_cur, eps_final_pred)
+                final_t = self._step(final_t, t_current, t_next, eps_final_pred, use_ddim, device)
 
         return initial_t, final_t
 
@@ -382,21 +413,23 @@ class UnifiedTransitionDiffusion(nn.Module):
         initials[0] = start.clone()
         finals[K - 1] = goal.clone()
 
-        # Setup timestep schedule
+        # Setup timestep schedule (following stgl)
         if use_ddim:
-            timesteps = torch.linspace(
-                self.num_timesteps - 1, 0, ddim_steps + 1, dtype=torch.long, device=device
-            )
+            time_schedule = self._ddim_timesteps(ddim_steps, device)
+            step_size = self.num_timesteps // ddim_steps
         else:
-            timesteps = torch.arange(self.num_timesteps - 1, -1, -1, device=device)
+            time_schedule = torch.arange(self.num_timesteps - 1, -1, -1, device=device)
+            step_size = 1
 
         if mode == "parallel":
             initials, finals = self._chain_parallel(
-                initials, finals, start, goal, K, B, timesteps, use_ddim, guidance_scale, device
+                initials, finals, start, goal, K, B,
+                time_schedule, step_size, use_ddim, guidance_scale, device
             )
         elif mode == "autoregressive":
             initials, finals = self._chain_autoregressive(
-                initials, finals, start, goal, K, B, timesteps, use_ddim, guidance_scale, device
+                initials, finals, start, goal, K, B,
+                time_schedule, step_size, use_ddim, guidance_scale, device
             )
         else:
             raise ValueError(f"Unknown chain mode: {mode}")
@@ -426,78 +459,103 @@ class UnifiedTransitionDiffusion(nn.Module):
         return best_chain, all_chains
 
     def _chain_parallel(
-        self, initials, finals, start, goal, K, B, timesteps, use_ddim, guidance_scale, device
+        self, initials, finals, start, goal, K, B,
+        time_schedule, step_size, use_ddim, guidance_scale, device
     ):
         """
-        Parallel constrained denoising for chain planning.
-        All transitions denoised simultaneously, with constraint enforcement after each step.
-        """
-        for i in range(len(timesteps) - 1):
-            t_current = timesteps[i]
-            t_next = timesteps[i + 1]
+        Parallel constrained denoising (stgl comp_pred_p_loop_n_same_t style).
 
-            # --- Step 1: Denoise all K transitions independently ---
-            new_initials = []
-            new_finals = []
+        At each denoising step:
+          1. Build overlap conditioning from OLD (same noise level) neighbors
+          2. Denoise all K transitions independently (with CFG)
+          3. Store denoised results in a separate list
+          4. Average connection points for constraint enforcement (GSC style)
+          5. Update
+        """
+        for idx in range(len(time_schedule)):
+            t_current = time_schedule[idx].item()
+            t_next = t_current - step_size
+
+            t_cur_tensor = torch.full((B,), t_current, dtype=torch.long, device=device)
+
+            # Store denoised results separately (stgl same_t pattern)
+            new_initials = [None] * K
+            new_finals = [None] * K
 
             for k in range(K):
-                # Determine which parts are fixed
                 is_first = (k == 0)
                 is_last = (k == K - 1)
 
-                # Timesteps: fixed parts get t=0, free parts get t_current
-                t_init_k = torch.zeros(B, dtype=torch.long, device=device) if is_first else \
-                    torch.full((B,), t_current.item(), dtype=torch.long, device=device)
-                t_final_k = torch.zeros(B, dtype=torch.long, device=device) if is_last else \
-                    torch.full((B,), t_current.item(), dtype=torch.long, device=device)
+                # --- Build tj_cond with overlap from OLD neighbors ---
+                # Init side
+                if is_first:
+                    # Inpaint start: clean data at t=0
+                    cur_initial = start.clone()
+                    t_init_k = torch.zeros(B, dtype=torch.long, device=device)
+                    init_cd_use_inpat = True
+                    init_cd_use_ovlp = False
+                    init_ovlp_state = torch.zeros(B, self.config_dim, device=device)
+                    init_ovlp_t = torch.zeros(B, dtype=torch.long, device=device)
+                else:
+                    # Overlap from previous transition's final (same noise level)
+                    cur_initial = initials[k]
+                    t_init_k = t_cur_tensor.clone()
+                    init_cd_use_inpat = False
+                    init_cd_use_ovlp = True
+                    init_ovlp_state = finals[k - 1].clone()   # still at t_current
+                    init_ovlp_t = t_cur_tensor.clone()
 
-                # Build per-transition tj_cond (inpaint for fixed sides)
-                zero_state = torch.zeros(B, self.config_dim, device=device)
-                zero_t = torch.zeros(B, dtype=torch.long, device=device)
+                # Final side
+                if is_last:
+                    # Inpaint goal: clean data at t=0
+                    cur_final = goal.clone()
+                    t_final_k = torch.zeros(B, dtype=torch.long, device=device)
+                    final_cd_use_inpat = True
+                    final_cd_use_ovlp = False
+                    final_ovlp_state = torch.zeros(B, self.config_dim, device=device)
+                    final_ovlp_t = torch.zeros(B, dtype=torch.long, device=device)
+                else:
+                    # Overlap from next transition's initial (same noise level)
+                    cur_final = finals[k]
+                    t_final_k = t_cur_tensor.clone()
+                    final_cd_use_inpat = False
+                    final_cd_use_ovlp = True
+                    final_ovlp_state = initials[k + 1].clone()  # still at t_current
+                    final_ovlp_t = t_cur_tensor.clone()
+
                 tj_cond_k = {
-                    'init_ovlp_state': zero_state,
-                    'final_ovlp_state': zero_state,
-                    'init_ovlp_t': zero_t,
-                    'final_ovlp_t': zero_t,
-                    'init_cd_use_ovlp': torch.zeros(B, dtype=torch.bool, device=device),
-                    'final_cd_use_ovlp': torch.zeros(B, dtype=torch.bool, device=device),
-                    'init_cd_use_inpat': torch.full((B,), is_first, dtype=torch.bool, device=device),
-                    'final_cd_use_inpat': torch.full((B,), is_last, dtype=torch.bool, device=device),
+                    'init_ovlp_state': init_ovlp_state,
+                    'final_ovlp_state': final_ovlp_state,
+                    'init_ovlp_t': init_ovlp_t,
+                    'final_ovlp_t': final_ovlp_t,
+                    'init_cd_use_ovlp': torch.full((B,), init_cd_use_ovlp, dtype=torch.bool, device=device),
+                    'final_cd_use_ovlp': torch.full((B,), final_cd_use_ovlp, dtype=torch.bool, device=device),
+                    'init_cd_use_inpat': torch.full((B,), init_cd_use_inpat, dtype=torch.bool, device=device),
+                    'final_cd_use_inpat': torch.full((B,), final_cd_use_inpat, dtype=torch.bool, device=device),
                 }
 
-                # Predict noise
-                eps_init_pred, eps_final_pred = self.denoiser(
-                    initials[k], finals[k], t_init_k, t_final_k, tj_cond=tj_cond_k
+                # --- Predict noise with CFG ---
+                eps_init_pred, eps_final_pred = self._cfg_predict(
+                    cur_initial, cur_final, t_init_k, t_final_k,
+                    tj_cond_k, guidance_scale,
                 )
 
-                # Denoise free parts
-                if not is_first:
-                    if use_ddim:
-                        t_cur = torch.full((B,), t_current.item(), dtype=torch.long, device=device)
-                        t_nxt = torch.full((B,), t_next.item(), dtype=torch.long, device=device)
-                        new_init = self.noise_schedule.ddim_step(initials[k], t_cur, t_nxt, eps_init_pred)
-                    else:
-                        t_cur = torch.full((B,), t_current.item(), dtype=torch.long, device=device)
-                        new_init = self.noise_schedule.p_sample_ddpm(initials[k], t_cur, eps_init_pred)
+                # --- Denoise free parts ---
+                if is_first:
+                    new_initials[k] = start.clone()
                 else:
-                    new_init = start.clone()
+                    new_initials[k] = self._step(
+                        cur_initial, t_current, t_next, eps_init_pred, use_ddim, device
+                    )
 
-                if not is_last:
-                    if use_ddim:
-                        t_cur = torch.full((B,), t_current.item(), dtype=torch.long, device=device)
-                        t_nxt = torch.full((B,), t_next.item(), dtype=torch.long, device=device)
-                        new_final = self.noise_schedule.ddim_step(finals[k], t_cur, t_nxt, eps_final_pred)
-                    else:
-                        t_cur = torch.full((B,), t_current.item(), dtype=torch.long, device=device)
-                        new_final = self.noise_schedule.p_sample_ddpm(finals[k], t_cur, eps_final_pred)
+                if is_last:
+                    new_finals[k] = goal.clone()
                 else:
-                    new_final = goal.clone()
+                    new_finals[k] = self._step(
+                        cur_final, t_current, t_next, eps_final_pred, use_ddim, device
+                    )
 
-                new_initials.append(new_init)
-                new_finals.append(new_final)
-
-            # --- Step 2: Enforce equality constraints at connection points ---
-            # finals[k] should equal initials[k+1] for k = 0, ..., K-2
+            # --- Enforce equality constraints: average connection points (GSC) ---
             for k in range(K - 1):
                 avg = (new_finals[k] + new_initials[k + 1]) / 2.0
                 new_finals[k] = avg
@@ -513,69 +571,102 @@ class UnifiedTransitionDiffusion(nn.Module):
         return initials, finals
 
     def _chain_autoregressive(
-        self, initials, finals, start, goal, K, B, timesteps, use_ddim, guidance_scale, device
+        self, initials, finals, start, goal, K, B,
+        time_schedule, step_size, use_ddim, guidance_scale, device
     ):
         """
-        Autoregressive constrained denoising for chain planning.
-        Within each denoising step, transitions are denoised sequentially,
-        so each transition benefits from the already-denoised previous one.
+        Autoregressive constrained denoising (stgl comp_pred_p_loop_n style).
+
+        Within each denoising step, transitions are processed sequentially:
+          - Already-denoised transition k provides overlap conditioning to transition k+1.
+          - init_ovlp_state = finals[k-1] (just denoised, ~t_next level)
+          - final_ovlp_state = initials[k+1] (not yet denoised, still t_current)
+
+        The overlap conditioning guides the denoiser — the actual data (initials[k],
+        finals[k]) stays at its own noise level and is NOT replaced by the neighbor.
         """
-        for i in range(len(timesteps) - 1):
-            t_current = timesteps[i]
-            t_next = timesteps[i + 1]
+        for idx in range(len(time_schedule)):
+            t_current = time_schedule[idx].item()
+            t_next = t_current - step_size
+
+            t_cur_tensor = torch.full((B,), t_current, dtype=torch.long, device=device)
 
             for k in range(K):
                 is_first = (k == 0)
                 is_last = (k == K - 1)
 
-                # Timesteps
-                t_init_k = torch.zeros(B, dtype=torch.long, device=device) if is_first else \
-                    torch.full((B,), t_current.item(), dtype=torch.long, device=device)
-                t_final_k = torch.zeros(B, dtype=torch.long, device=device) if is_last else \
-                    torch.full((B,), t_current.item(), dtype=torch.long, device=device)
+                # --- Build tj_cond with overlap from neighbors ---
 
-                # Build per-transition tj_cond (inpaint for fixed sides)
-                zero_state = torch.zeros(B, self.config_dim, device=device)
-                zero_t = torch.zeros(B, dtype=torch.long, device=device)
+                # Init side
+                if is_first:
+                    # Inpaint start: clean data at t=0
+                    cur_initial = start.clone()
+                    t_init_k = torch.zeros(B, dtype=torch.long, device=device)
+                    init_cd_use_inpat = True
+                    init_cd_use_ovlp = False
+                    init_ovlp_state = torch.zeros(B, self.config_dim, device=device)
+                    init_ovlp_t = torch.zeros(B, dtype=torch.long, device=device)
+                else:
+                    # Overlap from previous transition's final (already denoised in
+                    # this iteration → approximately at t_next noise level).
+                    # Following stgl: report ovlp_t = t_current - 1 (approximate).
+                    cur_initial = initials[k]
+                    t_init_k = t_cur_tensor.clone()
+                    init_cd_use_inpat = False
+                    init_cd_use_ovlp = True
+                    init_ovlp_state = finals[k - 1].clone()   # already denoised
+                    init_ovlp_t = torch.clamp(t_cur_tensor - 1, min=0)
+
+                # Final side
+                if is_last:
+                    # Inpaint goal: clean data at t=0
+                    cur_final = goal.clone()
+                    t_final_k = torch.zeros(B, dtype=torch.long, device=device)
+                    final_cd_use_inpat = True
+                    final_cd_use_ovlp = False
+                    final_ovlp_state = torch.zeros(B, self.config_dim, device=device)
+                    final_ovlp_t = torch.zeros(B, dtype=torch.long, device=device)
+                else:
+                    # Overlap from next transition's initial (not yet denoised
+                    # in this iteration → still at t_current noise level).
+                    cur_final = finals[k]
+                    t_final_k = t_cur_tensor.clone()
+                    final_cd_use_inpat = False
+                    final_cd_use_ovlp = True
+                    final_ovlp_state = initials[k + 1].clone()  # still noisy
+                    final_ovlp_t = t_cur_tensor.clone()
+
                 tj_cond_k = {
-                    'init_ovlp_state': zero_state,
-                    'final_ovlp_state': zero_state,
-                    'init_ovlp_t': zero_t,
-                    'final_ovlp_t': zero_t,
-                    'init_cd_use_ovlp': torch.zeros(B, dtype=torch.bool, device=device),
-                    'final_cd_use_ovlp': torch.zeros(B, dtype=torch.bool, device=device),
-                    'init_cd_use_inpat': torch.full((B,), is_first, dtype=torch.bool, device=device),
-                    'final_cd_use_inpat': torch.full((B,), is_last, dtype=torch.bool, device=device),
+                    'init_ovlp_state': init_ovlp_state,
+                    'final_ovlp_state': final_ovlp_state,
+                    'init_ovlp_t': init_ovlp_t,
+                    'final_ovlp_t': final_ovlp_t,
+                    'init_cd_use_ovlp': torch.full((B,), init_cd_use_ovlp, dtype=torch.bool, device=device),
+                    'final_cd_use_ovlp': torch.full((B,), final_cd_use_ovlp, dtype=torch.bool, device=device),
+                    'init_cd_use_inpat': torch.full((B,), init_cd_use_inpat, dtype=torch.bool, device=device),
+                    'final_cd_use_inpat': torch.full((B,), final_cd_use_inpat, dtype=torch.bool, device=device),
                 }
 
-                # Predict noise
-                eps_init_pred, eps_final_pred = self.denoiser(
-                    initials[k], finals[k], t_init_k, t_final_k, tj_cond=tj_cond_k
+                # --- Predict noise with CFG ---
+                eps_init_pred, eps_final_pred = self._cfg_predict(
+                    cur_initial, cur_final, t_init_k, t_final_k,
+                    tj_cond_k, guidance_scale,
                 )
 
-                # Denoise
+                # --- Denoise and update in-place (AR pattern) ---
                 if not is_first:
-                    if use_ddim:
-                        t_cur = torch.full((B,), t_current.item(), dtype=torch.long, device=device)
-                        t_nxt = torch.full((B,), t_next.item(), dtype=torch.long, device=device)
-                        initials[k] = self.noise_schedule.ddim_step(initials[k], t_cur, t_nxt, eps_init_pred)
-                    else:
-                        t_cur = torch.full((B,), t_current.item(), dtype=torch.long, device=device)
-                        initials[k] = self.noise_schedule.p_sample_ddpm(initials[k], t_cur, eps_init_pred)
+                    initials[k] = self._step(
+                        cur_initial, t_current, t_next, eps_init_pred, use_ddim, device
+                    )
 
                 if not is_last:
-                    if use_ddim:
-                        t_cur = torch.full((B,), t_current.item(), dtype=torch.long, device=device)
-                        t_nxt = torch.full((B,), t_next.item(), dtype=torch.long, device=device)
-                        finals[k] = self.noise_schedule.ddim_step(finals[k], t_cur, t_nxt, eps_final_pred)
-                    else:
-                        t_cur = torch.full((B,), t_current.item(), dtype=torch.long, device=device)
-                        finals[k] = self.noise_schedule.p_sample_ddpm(finals[k], t_cur, eps_final_pred)
+                    finals[k] = self._step(
+                        cur_final, t_current, t_next, eps_final_pred, use_ddim, device
+                    )
 
-                # Enforce constraint: finals[k] = initials[k+1] (for AR, propagate forward)
-                if not is_last:
-                    # Set next transition's initial to this transition's final
-                    initials[k + 1] = finals[k].clone()
+                # AR propagation: next transition's initial gets this final
+                # as overlap conditioning (NOT data replacement — the overlap
+                # is used via init_ovlp_state in the next iteration of k).
 
             # Re-enforce hard constraints
             initials[0] = start.clone()

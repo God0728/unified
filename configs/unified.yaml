@@ -31,6 +31,8 @@ data:
     right_hand: [15, 18]
     contacts:   [18, 22]
 
+  use_orientation: true
+
   # Normalization
   normalize: true
 

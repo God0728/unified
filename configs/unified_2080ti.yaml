@@ -7,20 +7,21 @@
 # ============================================================
 
 data:
-  left_foot_dim: 6
-  right_foot_dim: 6
+  left_foot_dim: 3
+  right_foot_dim: 3
   left_hand_dim: 3
   right_hand_dim: 3
   contact_dim: 4
   config_dim: 16
-  transition_dim: 44
+  transition_dim: 32
+  use_orientation: false
 
   slices:
-    left_foot:  [0, 6]
-    right_foot: [6, 12]
-    left_hand:  [12, 15]
-    right_hand: [15, 18]
-    contacts:   [18, 22]
+    left_foot:  [0, 3]
+    right_foot: [3, 6]
+    left_hand:  [6, 9]
+    right_hand: [9, 12]
+    contacts:   [12, 16]
 
   normalize: true
 
@@ -53,7 +54,7 @@ training:
   batch_size: 512
   learning_rate: 2.0e-4
   weight_decay: 1.0e-5
-  num_epochs: 3000
+  num_epochs: 50000
   warmup_steps: 1000
 
   w_initial: 1.0

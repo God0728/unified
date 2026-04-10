@@ -150,11 +150,13 @@ def train(args):
     writer = SummaryWriter(log_dir=str(log_dir))
 
     # Create dataloader
+    use_orientation = config['data'].get('use_orientation', True)
     dataloader, dataset = create_dataloader(
         data_path=args.data,
         batch_size=train_cfg['batch_size'],
         normalize=config['data'].get('normalize', True),
         augment=True,
+        use_orientation=use_orientation,
     )
     print(f"[Train] Dataset: {len(dataset)} samples, {len(dataloader)} batches/epoch")
 

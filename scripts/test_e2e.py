@@ -29,17 +29,16 @@ OUTPUT_DIR = Path(__file__).resolve().parent.parent / "outputs"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 
-def config_22d_to_viz_dict(config_22d: np.ndarray) -> dict:
-    """Convert 22D config to visualization dict."""
-    return {
-        'poses': {
-            'LF': config_22d[0:6].tolist(),    # pos(3) + euler(3)
-            'RF': config_22d[6:12].tolist(),
-            'LH': config_22d[12:15].tolist(),  # pos(3) only
-            'RH': config_22d[15:18].tolist(),
-        },
-        'contacts': config_22d[18:22].tolist(),
-    }
+def config_to_viz_dict(config_vec: np.ndarray, slices: dict) -> dict:
+    """Convert config vector to visualization dict using slices from config."""
+    key_map = {'left_foot': 'LF', 'right_foot': 'RF', 'left_hand': 'LH', 'right_hand': 'RH'}
+    result = {'poses': {}, 'contacts': []}
+    for key, abbr in key_map.items():
+        s = slices[key]
+        result['poses'][abbr] = config_vec[s[0]:s[1]].tolist()
+    cs = slices['contacts']
+    result['contacts'] = config_vec[cs[0]:cs[1]].tolist()
+    return result
 
 
 def test_data_loading():
@@ -91,11 +90,13 @@ def test_dataset_creation():
     # Use smaller batch for testing
     config['training']['batch_size'] = 32
 
+    use_orientation = config['data'].get('use_orientation', True)
     dataloader, dataset = create_dataloader(
         data_path=DATA_PATH,
         batch_size=config['training']['batch_size'],
         normalize=True,
         augment=True,
+        use_orientation=use_orientation,
     )
 
     for initial, final in dataloader:
@@ -164,7 +165,7 @@ def test_model(config, dataloader, dataset):
     return model, device
 
 
-def test_joint_sampling(model, dataset, device):
+def test_joint_sampling(model, dataset, device, slices):
     """Test 5: Joint (unconditional) sampling."""
     print("\n" + "=" * 60)
     print("TEST 5: Joint Sampling")
@@ -182,12 +183,13 @@ def test_joint_sampling(model, dataset, device):
     init_np = dataset.normalizer.denormalize(init_samples.cpu().numpy())
     final_np = dataset.normalizer.denormalize(final_samples.cpu().numpy())
 
-    print(f"  Sample 0 initial: LF_pos={init_np[0,:3].round(3)}, contacts={init_np[0,18:22].round(1)}")
-    print(f"  Sample 0 final:   LF_pos={final_np[0,:3].round(3)}, contacts={final_np[0,18:22].round(1)}")
+    cs = slices['contacts']
+    print(f"  Sample 0 initial: LF_pos={init_np[0,:3].round(3)}, contacts={init_np[0,cs[0]:cs[1]].round(1)}")
+    print(f"  Sample 0 final:   LF_pos={final_np[0,:3].round(3)}, contacts={final_np[0,cs[0]:cs[1]].round(1)}")
 
     # Visualize
-    init_dict = config_22d_to_viz_dict(init_np[0])
-    final_dict = config_22d_to_viz_dict(final_np[0])
+    init_dict = config_to_viz_dict(init_np[0], slices)
+    final_dict = config_to_viz_dict(final_np[0], slices)
     plot_transition(init_dict, final_dict,
                     title="Joint Sampling: Generated Transition",
                     save_path=str(OUTPUT_DIR / "test_joint_sampling.png"))
@@ -196,7 +198,7 @@ def test_joint_sampling(model, dataset, device):
     return init_np, final_np
 
 
-def test_conditional_forward(model, dataset, device):
+def test_conditional_forward(model, dataset, device, slices):
     """Test 6: Conditional forward (given initial -> generate final)."""
     print("\n" + "=" * 60)
     print("TEST 6: Conditional Forward Sampling")
@@ -217,14 +219,15 @@ def test_conditional_forward(model, dataset, device):
     final_np = dataset.normalizer.denormalize(final_samples.cpu().numpy())
     gt_final = dataset.normalizer.denormalize(dataset.finals_tensor[0:1].cpu().numpy())
 
-    print(f"  Condition LH: {init_np[0,12:15].round(4)}")
-    print(f"  GT final  LH: {gt_final[0,12:15].round(4)}")
-    print(f"  Gen final LH (s0): {final_np[0,12:15].round(4)}")
-    print(f"  Gen final LH (s1): {final_np[1,12:15].round(4)}")
+    lh = slices['left_hand']
+    print(f"  Condition LH: {init_np[0,lh[0]:lh[1]].round(4)}")
+    print(f"  GT final  LH: {gt_final[0,lh[0]:lh[1]].round(4)}")
+    print(f"  Gen final LH (s0): {final_np[0,lh[0]:lh[1]].round(4)}")
+    print(f"  Gen final LH (s1): {final_np[1,lh[0]:lh[1]].round(4)}")
 
     # Visualize
-    cond_dict = config_22d_to_viz_dict(init_np[0])
-    sample_dicts = [config_22d_to_viz_dict(final_np[i]) for i in range(8)]
+    cond_dict = config_to_viz_dict(init_np[0], slices)
+    sample_dicts = [config_to_viz_dict(final_np[i], slices) for i in range(8)]
     plot_multi_samples(sample_dicts, condition_config=cond_dict,
                        title="Forward: Given Initial, Generated Finals",
                        save_path=str(OUTPUT_DIR / "test_conditional_forward.png"))
@@ -232,7 +235,7 @@ def test_conditional_forward(model, dataset, device):
     print("  [PASS] Conditional forward successful")
 
 
-def test_conditional_backward(model, dataset, device):
+def test_conditional_backward(model, dataset, device, slices):
     """Test 7: Conditional backward (given final -> generate initial)."""
     print("\n" + "=" * 60)
     print("TEST 7: Conditional Backward Sampling")
@@ -252,13 +255,14 @@ def test_conditional_backward(model, dataset, device):
     init_np = dataset.normalizer.denormalize(init_samples.cpu().numpy())
     final_np = dataset.normalizer.denormalize(dataset.finals_tensor[0:1].cpu().numpy())
 
-    print(f"  Condition (final) LH: {final_np[0,12:15].round(4)}")
-    print(f"  Generated initial LH (s0): {init_np[0,12:15].round(4)}")
+    lh = slices['left_hand']
+    print(f"  Condition (final) LH: {final_np[0,lh[0]:lh[1]].round(4)}")
+    print(f"  Generated initial LH (s0): {init_np[0,lh[0]:lh[1]].round(4)}")
 
     print("  [PASS] Conditional backward successful")
 
 
-def test_chain_planning(model, dataset, device):
+def test_chain_planning(model, dataset, device, slices):
     """Test 8: Chain planning with constrained denoising."""
     print("\n" + "=" * 60)
     print("TEST 8: Chain Planning (CompDiffuser style)")
@@ -282,11 +286,12 @@ def test_chain_planning(model, dataset, device):
     chain_configs = []
     for i, ct in enumerate(best_chain):
         cn = dataset.normalizer.denormalize(ct.cpu().numpy())
-        cd = config_22d_to_viz_dict(cn)
+        cd = config_to_viz_dict(cn, slices)
         chain_configs.append(cd)
+        lh, rh, cs = slices['left_hand'], slices['right_hand'], slices['contacts']
         label = "Start" if i == 0 else ("Goal" if i == len(best_chain)-1 else f"WP{i}")
-        print(f"    {label}: LH={cn[12:15].round(3)}, RH={cn[15:18].round(3)}, "
-              f"contacts={cn[18:22].round(1)}")
+        print(f"    {label}: LH={cn[lh[0]:lh[1]].round(3)}, RH={cn[rh[0]:rh[1]].round(3)}, "
+              f"contacts={cn[cs[0]:cs[1]].round(1)}")
 
     plot_chain(chain_configs,
                title="Chain Planning (Parallel): Start -> WP1 -> WP2 -> Goal",
@@ -310,7 +315,7 @@ def test_chain_planning(model, dataset, device):
     chain_ar = []
     for ct in best_chain_ar:
         cn = dataset.normalizer.denormalize(ct.cpu().numpy())
-        chain_ar.append(config_22d_to_viz_dict(cn))
+        chain_ar.append(config_to_viz_dict(cn, slices))
 
     plot_chain(chain_ar,
                title="Chain Planning (Autoregressive)",
@@ -337,17 +342,19 @@ def main():
     # Test 3-4: Model + Training
     model, device = test_model(config, dataloader, dataset)
 
+    slices = config['data']['slices']
+
     # Test 5: Joint sampling
-    test_joint_sampling(model, dataset, device)
+    test_joint_sampling(model, dataset, device, slices)
 
     # Test 6: Conditional forward
-    test_conditional_forward(model, dataset, device)
+    test_conditional_forward(model, dataset, device, slices)
 
     # Test 7: Conditional backward
-    test_conditional_backward(model, dataset, device)
+    test_conditional_backward(model, dataset, device, slices)
 
     # Test 8: Chain planning
-    test_chain_planning(model, dataset, device)
+    test_chain_planning(model, dataset, device, slices)
 
     print("\n" + "=" * 60)
     print("ALL TESTS PASSED!")

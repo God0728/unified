@@ -48,15 +48,15 @@ def parse_args():
 
     # Conditional generation
     parser.add_argument("--condition_initial", type=str, default=None,
-                        help="Comma-separated 22D initial config for forward mode")
+                        help="Comma-separated config vector for forward mode")
     parser.add_argument("--condition_final", type=str, default=None,
-                        help="Comma-separated 22D final config for backward mode")
+                        help="Comma-separated config vector for backward mode")
 
     # Chain planning
     parser.add_argument("--start", type=str, default=None,
-                        help="Comma-separated 22D start config for chain mode")
+                        help="Comma-separated start config for chain mode")
     parser.add_argument("--goal", type=str, default=None,
-                        help="Comma-separated 22D goal config for chain mode")
+                        help="Comma-separated goal config for chain mode")
     parser.add_argument("--num_transitions", type=int, default=3,
                         help="Number of transitions in chain")
     parser.add_argument("--chain_mode", type=str, default="parallel",
@@ -88,20 +88,19 @@ def load_model(checkpoint_path: str, device: torch.device):
     return model, normalizer, config
 
 
-def config_to_dict(config_vec: np.ndarray) -> dict:
-    """Convert 22D config vector to structured dict."""
-    return {
-        'poses': {
-            'LF': config_vec[0:6].tolist(),
-            'RF': config_vec[6:12].tolist(),
-            'LH': config_vec[12:15].tolist(),
-            'RH': config_vec[15:18].tolist(),
-        },
-        'contacts': config_vec[18:22].tolist(),
-    }
+def config_to_dict(config_vec: np.ndarray, slices: dict) -> dict:
+    """Convert config vector to structured dict using slices from config."""
+    key_map = {'left_foot': 'LF', 'right_foot': 'RF', 'left_hand': 'LH', 'right_hand': 'RH'}
+    result = {'poses': {}, 'contacts': []}
+    for key, abbr in key_map.items():
+        s = slices[key]
+        result['poses'][abbr] = config_vec[s[0]:s[1]].tolist()
+    cs = slices['contacts']
+    result['contacts'] = config_vec[cs[0]:cs[1]].tolist()
+    return result
 
 
-def sample_joint(model, normalizer, args, device):
+def sample_joint(model, normalizer, args, device, slices):
     """Generate full (initial, final) transition pairs."""
     print(f"[Sample] Joint generation: {args.num_samples} samples...")
 
@@ -121,19 +120,20 @@ def sample_joint(model, normalizer, args, device):
     for i in range(args.num_samples):
         results.append({
             'sample_id': i,
-            'initial': config_to_dict(initial_np[i]),
-            'final': config_to_dict(final_np[i]),
+            'initial': config_to_dict(initial_np[i], slices),
+            'final': config_to_dict(final_np[i], slices),
         })
 
     return results
 
 
-def sample_forward(model, normalizer, args, device):
+def sample_forward(model, normalizer, args, device, slices):
     """Given initial config, generate final config."""
     assert args.condition_initial is not None, "Must provide --condition_initial for forward mode"
 
     initial_raw = parse_config_str(args.condition_initial)
-    assert len(initial_raw) == 22, f"Expected 22D, got {len(initial_raw)}D"
+    config_dim = model.config_dim
+    assert len(initial_raw) == config_dim, f"Expected {config_dim}D, got {len(initial_raw)}D"
 
     # Normalize
     initial_norm = normalizer.normalize(initial_raw)
@@ -158,19 +158,20 @@ def sample_forward(model, normalizer, args, device):
     for i in range(args.num_samples):
         results.append({
             'sample_id': i,
-            'initial': config_to_dict(initial_raw),
-            'final': config_to_dict(final_np[i]),
+            'initial': config_to_dict(initial_raw, slices),
+            'final': config_to_dict(final_np[i], slices),
         })
 
     return results
 
 
-def sample_backward(model, normalizer, args, device):
+def sample_backward(model, normalizer, args, device, slices):
     """Given final config, generate initial config."""
     assert args.condition_final is not None, "Must provide --condition_final for backward mode"
 
     final_raw = parse_config_str(args.condition_final)
-    assert len(final_raw) == 22, f"Expected 22D, got {len(final_raw)}D"
+    config_dim = model.config_dim
+    assert len(final_raw) == config_dim, f"Expected {config_dim}D, got {len(final_raw)}D"
 
     # Normalize
     final_norm = normalizer.normalize(final_raw)
@@ -195,21 +196,23 @@ def sample_backward(model, normalizer, args, device):
     for i in range(args.num_samples):
         results.append({
             'sample_id': i,
-            'initial': config_to_dict(initial_np[i]),
-            'final': config_to_dict(final_raw),
+            'initial': config_to_dict(initial_np[i], slices),
+            'final': config_to_dict(final_raw, slices),
         })
 
     return results
 
 
-def sample_chain(model, normalizer, args, device):
+def sample_chain(model, normalizer, args, device, slices):
     """Chain planning: generate A -> c1 -> c2 -> ... -> D."""
     assert args.start is not None, "Must provide --start for chain mode"
     assert args.goal is not None, "Must provide --goal for chain mode"
 
     start_raw = parse_config_str(args.start)
     goal_raw = parse_config_str(args.goal)
-    assert len(start_raw) == 22 and len(goal_raw) == 22
+    config_dim = model.config_dim
+    assert len(start_raw) == config_dim and len(goal_raw) == config_dim, \
+        f"Expected {config_dim}D configs"
 
     # Normalize
     start_norm = normalizer.normalize(start_raw)
@@ -239,13 +242,14 @@ def sample_chain(model, normalizer, args, device):
         chain_configs.append({
             'waypoint_id': i,
             'label': 'start' if i == 0 else ('goal' if i == K else f'intermediate_{i}'),
-            'config': config_to_dict(config_np),
+            'config': config_to_dict(config_np, slices),
         })
 
     # Also save all candidate chains
-    all_chains_np = normalizer.denormalize(all_chains.cpu().numpy().reshape(-1, 22)).reshape(
-        args.num_samples, K + 1, 22
-    )
+    config_dim = model.config_dim
+    all_chains_np = normalizer.denormalize(
+        all_chains.cpu().numpy().reshape(-1, config_dim)
+    ).reshape(args.num_samples, K + 1, config_dim)
 
     results = {
         'best_chain': chain_configs,
@@ -253,7 +257,7 @@ def sample_chain(model, normalizer, args, device):
         'chain_mode': args.chain_mode,
         'num_candidates': args.num_samples,
         'all_chains': [
-            [config_to_dict(all_chains_np[s, w, :]) for w in range(K + 1)]
+            [config_to_dict(all_chains_np[s, w, :], slices) for w in range(K + 1)]
             for s in range(args.num_samples)
         ],
     }
@@ -270,17 +274,18 @@ def main():
 
     # Load model
     model, normalizer, config = load_model(args.checkpoint, device)
-    print(f"[Sample] Model loaded from {args.checkpoint}")
+    slices = config['data']['slices']
+    print(f"[Sample] Model loaded from {args.checkpoint} (config_dim={model.config_dim})")
 
     # Run sampling
     if args.mode == "joint":
-        results = sample_joint(model, normalizer, args, device)
+        results = sample_joint(model, normalizer, args, device, slices)
     elif args.mode == "forward":
-        results = sample_forward(model, normalizer, args, device)
+        results = sample_forward(model, normalizer, args, device, slices)
     elif args.mode == "backward":
-        results = sample_backward(model, normalizer, args, device)
+        results = sample_backward(model, normalizer, args, device, slices)
     elif args.mode == "chain":
-        results = sample_chain(model, normalizer, args, device)
+        results = sample_chain(model, normalizer, args, device, slices)
     else:
         raise ValueError(f"Unknown mode: {args.mode}")
 

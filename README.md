@@ -66,9 +66,9 @@ cd /home/ubuntu/robot_pose_diffusion/unified
 
 # Start training
 python scripts/train.py \
-    --config configs/unified.yaml \
-    --data /home/crc/jimmy/unified_module/unified/balance_dataset_20260316.json \
-    --output_dir checkpoints/test0316
+    --config configs/unified_2080ti.yaml \
+    --data /home/crc/jimmy/unified_module/unified/dataset/seiko_talos_merged.json \
+    --output_dir checkpoints/test0410
 ```
 
 -   The script will automatically save checkpoints and TensorBoard logs to the `output_dir`.
