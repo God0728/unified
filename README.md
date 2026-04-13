@@ -117,15 +117,18 @@ START_STATE="...your 22D start state..."
 GOAL_STATE="...your 22D goal state..."
 
 python scripts/sample.py \
-    --checkpoint checkpoints/my_run/checkpoint_best.pt \
+    --checkpoint /home/crc/jimmy/unified_module/unified/checkpoints/test0411_50000/checkpoint_best.pt\
     --mode chain \
-    --start "$START_STATE" \
-    --goal "$GOAL_STATE" \
-    --num_transitions 3 \
+    --start="1.45267e-11,3.01423e-12,3.30277e-13,1.45525e-11,-0.17,-1.57152e-13,0.415559,0.264454,0.971211,0.425521,-0.424698,0.924157,1,1,0,0" \
+    --goal="0.234402,-0.000106034,0.000132038,0.219698,-0.257853,0.00024149,0.688516,0.263693,0.971066,0.582762,-0.425193,0.923607,1,1,0,0" \
+    --num_transitions 4 \
     --num_samples 8 \
-    --output outputs/chain_plan.json
+    --guidance_scale 4.0 \
+    --output outputs/seiko_chain_0413_test1.json
 ```
 
+cd /home/crc/jimmy/unified_module/unified && python scripts/sample.py     
+--checkpoint checkpoints/seiko_talos_3000_0325/checkpoint_best.pt     --mode chain     --start="1.45267e-11,3.01423e-12,3.30277e-13,1.91885e-08,-8.3791e-08,1.63046e-08,1.45525e-11,-0.17,-1.57152e-13,1.91885e-08,-8.3791e-08,1.62907e-08,0.415559,0.264454,0.971211,0.425521,-0.424698,0.924157,1,1,0,0"     --goal="0.234402,-0.000106034,0.000132038,0.000253223,-0.000362294,2.2021e-05,0.219698,-0.257853,0.00024149,-0.000319312,-6.65064e-05,-3.21198e-05,0.688516,0.263693,0.971066,0.582762,-0.425193,0.923607,1,1,0,0"     --num_transitions 4     --num_samples 8     --chain_mode parallel     --guidance_scale 4.0     --output outputs/seiko_chain_ee_test3.json
 This will generate a plan with `3 - 1 = 2` intermediate waypoints. The script saves the best chain found, as well as all `num_samples` candidate chains for analysis.
 
 ## 5. End-to-End Test
