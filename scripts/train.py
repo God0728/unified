@@ -284,6 +284,34 @@ def train(args):
             if ema is not None:
                 ema.restore(model)
 
+        # Epoch snapshot: save generated samples for distribution analysis
+        snapshot_interval = train_cfg.get('snapshot_interval', 1000)
+        if snapshot_interval > 0 and (epoch + 1) % snapshot_interval == 0:
+            snap_dir = output_dir / "snapshots"
+            snap_dir.mkdir(exist_ok=True)
+            if ema is not None:
+                ema.apply(model)
+            model.eval()
+            with torch.no_grad():
+                snap_ini, snap_fin = model.sample_transition(
+                    num_samples=min(256, len(dataset)),
+                    device=device, use_ddim=True, ddim_steps=50,
+                )
+            snap_ini_np = snap_ini.cpu().numpy()
+            snap_fin_np = snap_fin.cpu().numpy()
+            # Denormalize if normalizer available
+            if hasattr(dataset, 'normalizer') and dataset.normalizer.fitted:
+                snap_ini_np = dataset.normalizer.denormalize(snap_ini_np)
+                snap_fin_np = dataset.normalizer.denormalize(snap_fin_np)
+            np.savez(
+                snap_dir / f"epoch_{epoch+1}.npz",
+                initial=snap_ini_np, final=snap_fin_np, epoch=epoch+1,
+            )
+            print(f"  [Snapshot] Saved epoch {epoch+1} samples -> {snap_dir}/epoch_{epoch+1}.npz")
+            model.train()
+            if ema is not None:
+                ema.restore(model)
+
         # Save checkpoint
         if (epoch + 1) % train_cfg.get('save_interval', 200) == 0:
             save_model = model

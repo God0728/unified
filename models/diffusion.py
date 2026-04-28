@@ -35,6 +35,13 @@ class UnifiedTransitionDiffusion(nn.Module):
         self.config = config
         self.config_dim = config['data']['config_dim']
 
+        # Store position slice indices for translation augmentation
+        slices = config['data']['slices']
+        self._pos_slices = []
+        for key in ['left_foot', 'right_foot', 'left_hand', 'right_hand']:
+            s = slices[key]
+            self._pos_slices.append((s[0], min(s[0] + 3, s[1])))  # only xyz
+
         # Build denoiser
         self.denoiser = build_denoiser(config)
 
@@ -62,6 +69,9 @@ class UnifiedTransitionDiffusion(nn.Module):
         self.tr_inpat_prob = train_cfg.get('tr_inpat_prob', 0.5)
         self.tr_no_ovlp_none = train_cfg.get('tr_no_ovlp_none', False)
         self.non_repla_inpat_prob = train_cfg.get('non_repla_inpat_prob', 0.5)
+
+        # Translation augmentation scale (in normalized space)
+        self.aug_trans_scale = train_cfg.get('aug_trans_scale', 0.1)
 
     def to(self, device):
         """Override to also move noise schedule."""
@@ -91,6 +101,15 @@ class UnifiedTransitionDiffusion(nn.Module):
         """
         B = initial.shape[0]
         device = initial.device
+
+        # ---- Translation augmentation (in normalized space) ----
+        if self.training and self.aug_trans_scale > 0:
+            delta = torch.randn(B, 3, device=device) * self.aug_trans_scale
+            initial = initial.clone()
+            final = final.clone()
+            for start, end in self._pos_slices:
+                initial[:, start:end] = initial[:, start:end] + delta[:, :end-start]
+                final[:, start:end] = final[:, start:end] + delta[:, :end-start]
 
         # ---- Step 1: Sample base timesteps & q_sample ----
         t_init = torch.randint(0, self.num_timesteps, (B,), device=device)

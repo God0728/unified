@@ -1,0 +1,17 @@
+name: unified
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - pytorch=2.4
+  - torchvision
+  - torchaudio
+  - pytorch-cuda=12.4
+  - numpy
+  - matplotlib
+  - pyyaml
+  - tensorboard
+  - pip
