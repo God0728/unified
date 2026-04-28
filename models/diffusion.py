@@ -9,6 +9,7 @@ Core diffusion model that handles:
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import numpy as np
 from typing import Optional, List, Tuple
 
@@ -72,6 +73,20 @@ class UnifiedTransitionDiffusion(nn.Module):
 
         # Translation augmentation scale (in normalized space)
         self.aug_trans_scale = train_cfg.get('aug_trans_scale', 0.1)
+
+        # ---- Change mask loss config ----
+        self.w_change_cls = train_cfg.get('w_change_cls', 1.0)
+        self.w_changed_dim = train_cfg.get('w_changed_dim', 5.0)
+
+        # Effector dimension slices for change mask (xyz only, used for boosting/masking)
+        self._effector_slices = []
+        for key in ['left_foot', 'right_foot', 'left_hand', 'right_hand']:
+            s = config['data']['slices'][key]
+            self._effector_slices.append((s[0], s[1]))
+        # Contact slices: each effector has 1 contact dim starting at _contact_start
+        cs = config['data']['slices']['contacts']
+        self._contact_start = cs[0]
+        self._contact_end = cs[1]
 
     def to(self, device):
         """Override to also move noise schedule."""
@@ -198,23 +213,49 @@ class UnifiedTransitionDiffusion(nn.Module):
         }
 
         # ---- Step 5: Predict noise ----
-        eps_init_pred, eps_final_pred = self.denoiser(
+        eps_init_pred, eps_final_pred, change_logits = self.denoiser(
             initial_noisy, final_noisy, t_init, t_final, tj_cond=tj_cond
         )
 
+        # ---- Step 5.5: Compute ground-truth change labels from contact flips ----
+        # In normalized space, contact 0 -> -1 and 1 -> 1, so abs diff still picks
+        # the flipped effector correctly.
+        contact_init = initial[:, self._contact_start:self._contact_end]   # (B, 4)
+        contact_final = final[:, self._contact_start:self._contact_end]     # (B, 4)
+        contact_diff = (contact_final - contact_init).abs()                  # (B, 4)
+        change_labels = contact_diff.argmax(dim=-1)                          # (B,)
+
+        # Build per-dimension weight mask: boost the changed effector's pos+contact dims
+        dim_weights = torch.ones(B, self.config_dim, device=device)
+        for eff_idx in range(4):
+            mask = (change_labels == eff_idx)
+            if mask.any():
+                s, e = self._effector_slices[eff_idx]
+                dim_weights[mask, s:e] = self.w_changed_dim
+                dim_weights[mask, self._contact_start + eff_idx] = self.w_changed_dim
+
         # ---- Step 6: Compute weighted losses ----
-        loss_init_per_sample = ((eps_init_pred - noise_init) ** 2).mean(dim=-1)
-        loss_final_per_sample = ((eps_final_pred - noise_final) ** 2).mean(dim=-1)
+        loss_init_per_dim = (eps_init_pred - noise_init) ** 2     # (B, D)
+        loss_final_per_dim = (eps_final_pred - noise_final) ** 2  # (B, D)
+
+        loss_init_per_sample = (loss_init_per_dim * dim_weights).mean(dim=-1)   # (B,)
+        loss_final_per_sample = (loss_final_per_dim * dim_weights).mean(dim=-1) # (B,)
 
         loss_init = (loss_init_per_sample * loss_weight_init).sum() / loss_weight_init.sum().clamp_min(1.0)
         loss_final = (loss_final_per_sample * loss_weight_final).sum() / loss_weight_final.sum().clamp_min(1.0)
 
-        total_loss = self.w_initial * loss_init + self.w_final * loss_final
+        # ---- Step 7: Change classification loss ----
+        change_cls_loss = F.cross_entropy(change_logits, change_labels)
+
+        total_loss = (self.w_initial * loss_init
+                      + self.w_final * loss_final
+                      + self.w_change_cls * change_cls_loss)
 
         return {
             'loss': total_loss,
             'loss_init': loss_init.item(),
             'loss_final': loss_final.item(),
+            'loss_change_cls': change_cls_loss.item(),
         }
 
     # ================================================================
@@ -235,27 +276,29 @@ class UnifiedTransitionDiffusion(nn.Module):
         t_final: torch.Tensor,
         tj_cond: dict,
         guidance_scale: float,
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         Predict noise with classifier-free guidance, following stgl's pattern.
 
         stgl duplicates the batch: 1st half = conditional, 2nd half = force_dropout.
         Here we use two forward passes (conditional + unconditional) then combine:
             eps = eps_uncond + w * (eps_cond - eps_uncond)
+
+        change_logits is taken from the conditional pass (CFG only applied to eps).
         """
-        eps_init_cond, eps_final_cond = self.denoiser(
+        eps_init_cond, eps_final_cond, change_logits = self.denoiser(
             initial, final, t_init, t_final, tj_cond=tj_cond
         )
         if guidance_scale == 1.0:
-            return eps_init_cond, eps_final_cond
+            return eps_init_cond, eps_final_cond, change_logits
 
         # Unconditional: same inputs & timesteps, all condition features zeroed
-        eps_init_uncond, eps_final_uncond = self.denoiser(
+        eps_init_uncond, eps_final_uncond, _ = self.denoiser(
             initial, final, t_init, t_final, tj_cond=None
         )
         eps_init = eps_init_uncond + guidance_scale * (eps_init_cond - eps_init_uncond)
         eps_final = eps_final_uncond + guidance_scale * (eps_final_cond - eps_final_uncond)
-        return eps_init, eps_final
+        return eps_init, eps_final, change_logits
 
     def _step(
         self,
@@ -366,7 +409,7 @@ class UnifiedTransitionDiffusion(nn.Module):
             }
 
             # Predict noise with CFG (stgl: cond vs uncond → combine)
-            eps_init_pred, eps_final_pred = self._cfg_predict(
+            eps_init_pred, eps_final_pred, change_logits = self._cfg_predict(
                 initial_t, final_t, t_init_tensor, t_final_tensor,
                 tj_cond, guidance_scale,
             )
@@ -376,6 +419,43 @@ class UnifiedTransitionDiffusion(nn.Module):
                 initial_t = self._step(initial_t, t_current, t_next, eps_init_pred, use_ddim, device)
             if denoise_final:
                 final_t = self._step(final_t, t_current, t_next, eps_final_pred, use_ddim, device)
+
+            # Clamp contact dims to normalized range [-1, 1] during denoising
+            if denoise_init:
+                initial_t[:, self._contact_start:self._contact_end] = \
+                    initial_t[:, self._contact_start:self._contact_end].clamp(-1.0, 1.0)
+            if denoise_final:
+                final_t[:, self._contact_start:self._contact_end] = \
+                    final_t[:, self._contact_start:self._contact_end].clamp(-1.0, 1.0)
+
+        # ---- Post-processing: enforce single-effector change constraint ----
+        # Use last-step change_logits to determine which effector flipped, then
+        # zero out non-target effector deltas so only one effector changes.
+        if denoise_init and denoise_final:
+            change_pred = change_logits.argmax(dim=-1)  # (B,)
+            delta = final_t - initial_t
+            masked_delta = torch.zeros_like(delta)
+            for eff_idx in range(4):
+                mask = (change_pred == eff_idx)
+                if mask.any():
+                    s, e = self._effector_slices[eff_idx]
+                    masked_delta[mask, s:e] = delta[mask, s:e]
+                    masked_delta[mask, self._contact_start + eff_idx] = \
+                        delta[mask, self._contact_start + eff_idx]
+            final_t = initial_t + masked_delta
+
+        # Hard binarize contact dimensions in normalized space
+        # ( >= 0 -> +1 (contact=1), < 0 -> -1 (contact=0) )
+        initial_t[:, self._contact_start:self._contact_end] = torch.where(
+            initial_t[:, self._contact_start:self._contact_end] >= 0,
+            torch.ones_like(initial_t[:, self._contact_start:self._contact_end]),
+            -torch.ones_like(initial_t[:, self._contact_start:self._contact_end]),
+        )
+        final_t[:, self._contact_start:self._contact_end] = torch.where(
+            final_t[:, self._contact_start:self._contact_end] >= 0,
+            torch.ones_like(final_t[:, self._contact_start:self._contact_end]),
+            -torch.ones_like(final_t[:, self._contact_start:self._contact_end]),
+        )
 
         return initial_t, final_t
 
@@ -461,6 +541,38 @@ class UnifiedTransitionDiffusion(nn.Module):
             # Average the overlap: finals[k] and initials[k+1]
             all_chains[:, k + 1, :] = (finals[k] + initials[k + 1]) / 2
         all_chains[:, K, :] = finals[K - 1]  # D
+
+        # ---- Post-process each transition: enforce single-effector change + binarize contacts ----
+        cs, ce = self._contact_start, self._contact_end
+        # Binarize contact dims for all waypoints (only intermediate ones; start/goal
+        # are user-provided and should already be valid)
+        for k in range(1, K):
+            wp = all_chains[:, k, :]
+            wp[:, cs:ce] = torch.where(
+                wp[:, cs:ce] >= 0,
+                torch.ones_like(wp[:, cs:ce]),
+                -torch.ones_like(wp[:, cs:ce]),
+            )
+            all_chains[:, k, :] = wp
+
+        # For each adjacent pair, restrict change to a single effector based on
+        # contact flip (after binarization the flipped effector is well defined).
+        for k in range(K):
+            wp_a = all_chains[:, k, :]
+            wp_b = all_chains[:, k + 1, :]
+            ca = wp_a[:, cs:ce]
+            cb = wp_b[:, cs:ce]
+            change_pred = (cb - ca).abs().argmax(dim=-1)  # (B,)
+            delta = wp_b - wp_a
+            masked_delta = torch.zeros_like(delta)
+            for eff_idx in range(4):
+                mask = (change_pred == eff_idx)
+                if mask.any():
+                    s, e = self._effector_slices[eff_idx]
+                    masked_delta[mask, s:e] = delta[mask, s:e]
+                    # Only the predicted effector's contact dim is allowed to flip
+                    masked_delta[mask, cs + eff_idx] = delta[mask, cs + eff_idx]
+            all_chains[:, k + 1, :] = wp_a + masked_delta
 
         # Select best chain based on overlap consistency
         overlap_errors = []
@@ -554,7 +666,7 @@ class UnifiedTransitionDiffusion(nn.Module):
                 }
 
                 # --- Predict noise with CFG ---
-                eps_init_pred, eps_final_pred = self._cfg_predict(
+                eps_init_pred, eps_final_pred, _ = self._cfg_predict(
                     cur_initial, cur_final, t_init_k, t_final_k,
                     tj_cond_k, guidance_scale,
                 )
@@ -667,7 +779,7 @@ class UnifiedTransitionDiffusion(nn.Module):
                 }
 
                 # --- Predict noise with CFG ---
-                eps_init_pred, eps_final_pred = self._cfg_predict(
+                eps_init_pred, eps_final_pred, _ = self._cfg_predict(
                     cur_initial, cur_final, t_init_k, t_final_k,
                     tj_cond_k, guidance_scale,
                 )

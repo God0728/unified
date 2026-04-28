@@ -238,4 +238,7 @@ class UnifiedTransitionDenoiser(nn.Module):
         eps_init_pred = self.output_proj_init(x[:, 0, :])   # (B, 22)
         eps_final_pred = self.output_proj_final(x[:, 1, :])  # (B, 22)
 
-        return eps_init_pred, eps_final_pred
+        # Placeholder change_logits for interface compatibility with MLP denoiser
+        change_logits = torch.zeros(B, 4, device=device)
+
+        return eps_init_pred, eps_final_pred, change_logits

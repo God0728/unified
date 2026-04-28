@@ -97,6 +97,14 @@ class UnifiedTransitionDenoiserMLP(nn.Module):
         self.output_init = nn.Linear(hidden_dims[-1], config_dim)
         self.output_final = nn.Linear(hidden_dims[-1], config_dim)
 
+        # ---- Change Mask Classification Head ----
+        # Predicts which of the 4 effectors changed (LF=0, RF=1, LH=2, RH=3)
+        self.change_cls_head = nn.Sequential(
+            nn.Linear(hidden_dims[-1], hidden_dims[-1] // 2),
+            nn.SiLU(),
+            nn.Linear(hidden_dims[-1] // 2, 4),
+        )
+
     def forward(
         self,
         initial_noisy: torch.Tensor,   # (B, D)
@@ -171,4 +179,7 @@ class UnifiedTransitionDenoiserMLP(nn.Module):
         eps_init_pred = self.output_init(h)    # (B, D)
         eps_final_pred = self.output_final(h)  # (B, D)
 
-        return eps_init_pred, eps_final_pred
+        # Predict which effector changed
+        change_logits = self.change_cls_head(h)  # (B, 4)
+
+        return eps_init_pred, eps_final_pred, change_logits

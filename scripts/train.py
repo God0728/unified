@@ -224,6 +224,7 @@ def train(args):
         epoch_loss = 0
         epoch_loss_init = 0
         epoch_loss_final = 0
+        epoch_loss_cls = 0
         num_batches = 0
         t_start = time.time()
 
@@ -249,6 +250,7 @@ def train(args):
             epoch_loss += loss.item()
             epoch_loss_init += losses['loss_init']
             epoch_loss_final += losses['loss_final']
+            epoch_loss_cls += losses.get('loss_change_cls', 0.0)
             num_batches += 1
             global_step += 1
 
@@ -256,17 +258,20 @@ def train(args):
             writer.add_scalar('train/loss', loss.item(), global_step)
             writer.add_scalar('train/loss_init', losses['loss_init'], global_step)
             writer.add_scalar('train/loss_final', losses['loss_final'], global_step)
+            writer.add_scalar('train/loss_change_cls', losses.get('loss_change_cls', 0.0), global_step)
             writer.add_scalar('train/lr', scheduler.get_last_lr()[0], global_step)
 
         # Epoch summary
         avg_loss = epoch_loss / max(num_batches, 1)
         avg_loss_init = epoch_loss_init / max(num_batches, 1)
         avg_loss_final = epoch_loss_final / max(num_batches, 1)
+        avg_loss_cls = epoch_loss_cls / max(num_batches, 1)
         elapsed = time.time() - t_start
 
         if (epoch + 1) % train_cfg.get('log_interval', 50) == 0 or epoch == 0:
             print(f"  Epoch {epoch+1:4d}/{train_cfg['num_epochs']} | "
-                  f"Loss: {avg_loss:.4f} (init: {avg_loss_init:.4f}, final: {avg_loss_final:.4f}) | "
+                  f"Loss: {avg_loss:.4f} (init: {avg_loss_init:.4f}, final: {avg_loss_final:.4f}, "
+                  f"cls: {avg_loss_cls:.4f}) | "
                   f"LR: {scheduler.get_last_lr()[0]:.2e} | "
                   f"Time: {elapsed:.1f}s")
 

@@ -61,6 +61,11 @@ training:
   w_final: 1.0
   p_uncond: 0.1
 
+  # Change mask classification loss weight
+  w_change_cls: 1.0
+  # Boost factor for changed effector dimensions in MSE loss
+  w_changed_dim: 5.0
+
   use_ema: true
   ema_decay: 0.9999
 
