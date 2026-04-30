@@ -251,12 +251,50 @@ class UnifiedTransitionDiffusion(nn.Module):
                       + self.w_final * loss_final
                       + self.w_change_cls * change_cls_loss)
 
-        return {
-            'loss': total_loss,
-            'loss_init': loss_init.item(),
-            'loss_final': loss_final.item(),
-            'loss_change_cls': change_cls_loss.item(),
-        }
+        # ---- Step 8: Diagnostic metrics (no grad) ----
+        with torch.no_grad():
+            change_pred = change_logits.argmax(dim=-1)
+            cls_correct = (change_pred == change_labels).float()
+            cls_acc = cls_correct.mean().item()
+
+            # Bucket by t_init into 4 buckets covering [0, num_timesteps)
+            num_buckets = 4
+            bucket_size = self.num_timesteps / num_buckets
+            t_buckets = torch.clamp(
+                (t_init.float() / bucket_size).long(),
+                max=num_buckets - 1,
+            )
+            # Also use a "max-t" bucket for cls (cls depends on both sides' contact noise)
+            t_max = torch.maximum(t_init, t_final)
+            t_buckets_cls = torch.clamp(
+                (t_max.float() / bucket_size).long(),
+                max=num_buckets - 1,
+            )
+
+            # Per-sample raw (unweighted) MSE for loss_init bucketing
+            loss_init_raw_per_sample = loss_init_per_dim.mean(dim=-1)
+
+            metrics = {
+                'loss': total_loss,
+                'loss_init': loss_init.item(),
+                'loss_final': loss_final.item(),
+                'loss_change_cls': change_cls_loss.item(),
+                'cls_acc': cls_acc,
+            }
+            for bi in range(num_buckets):
+                m_init = (t_buckets == bi)
+                if m_init.any():
+                    metrics[f'loss_init_bucket_{bi}'] = loss_init_raw_per_sample[m_init].mean().item()
+                else:
+                    metrics[f'loss_init_bucket_{bi}'] = 0.0
+
+                m_cls = (t_buckets_cls == bi)
+                if m_cls.any():
+                    metrics[f'cls_acc_bucket_{bi}'] = cls_correct[m_cls].mean().item()
+                else:
+                    metrics[f'cls_acc_bucket_{bi}'] = 0.0
+
+        return metrics
 
     # ================================================================
     # Helpers: CFG prediction + denoising step
@@ -332,6 +370,7 @@ class UnifiedTransitionDiffusion(nn.Module):
         guidance_scale: float = 1.0,
         use_ddim: bool = True,
         ddim_steps: int = 50,
+        apply_postprocess: bool = True,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Sample transitions with flexible conditioning.
@@ -431,7 +470,7 @@ class UnifiedTransitionDiffusion(nn.Module):
         # ---- Post-processing: enforce single-effector change constraint ----
         # Use last-step change_logits to determine which effector flipped, then
         # zero out non-target effector deltas so only one effector changes.
-        if denoise_init and denoise_final:
+        if apply_postprocess and denoise_init and denoise_final:
             change_pred = change_logits.argmax(dim=-1)  # (B,)
             delta = final_t - initial_t
             masked_delta = torch.zeros_like(delta)
@@ -446,16 +485,17 @@ class UnifiedTransitionDiffusion(nn.Module):
 
         # Hard binarize contact dimensions in normalized space
         # ( >= 0 -> +1 (contact=1), < 0 -> -1 (contact=0) )
-        initial_t[:, self._contact_start:self._contact_end] = torch.where(
-            initial_t[:, self._contact_start:self._contact_end] >= 0,
-            torch.ones_like(initial_t[:, self._contact_start:self._contact_end]),
-            -torch.ones_like(initial_t[:, self._contact_start:self._contact_end]),
-        )
-        final_t[:, self._contact_start:self._contact_end] = torch.where(
-            final_t[:, self._contact_start:self._contact_end] >= 0,
-            torch.ones_like(final_t[:, self._contact_start:self._contact_end]),
-            -torch.ones_like(final_t[:, self._contact_start:self._contact_end]),
-        )
+        if apply_postprocess:
+            initial_t[:, self._contact_start:self._contact_end] = torch.where(
+                initial_t[:, self._contact_start:self._contact_end] >= 0,
+                torch.ones_like(initial_t[:, self._contact_start:self._contact_end]),
+                -torch.ones_like(initial_t[:, self._contact_start:self._contact_end]),
+            )
+            final_t[:, self._contact_start:self._contact_end] = torch.where(
+                final_t[:, self._contact_start:self._contact_end] >= 0,
+                torch.ones_like(final_t[:, self._contact_start:self._contact_end]),
+                -torch.ones_like(final_t[:, self._contact_start:self._contact_end]),
+            )
 
         return initial_t, final_t
 
@@ -474,6 +514,7 @@ class UnifiedTransitionDiffusion(nn.Module):
         use_ddim: bool = True,
         ddim_steps: int = 50,
         guidance_scale: float = 1.0,
+        progress_lambda_max: float = 0.0,    # B: progress anchor strength at t=T (0 = disabled)
     ) -> Tuple[List[torch.Tensor], torch.Tensor]:
         """
         Chain planning: generate a sequence of transitions
@@ -523,7 +564,8 @@ class UnifiedTransitionDiffusion(nn.Module):
         if mode == "parallel":
             initials, finals = self._chain_parallel(
                 initials, finals, start, goal, K, B,
-                time_schedule, step_size, use_ddim, guidance_scale, device
+                time_schedule, step_size, use_ddim, guidance_scale, device,
+                progress_lambda_max=progress_lambda_max,
             )
         elif mode == "autoregressive":
             initials, finals = self._chain_autoregressive(
@@ -542,10 +584,12 @@ class UnifiedTransitionDiffusion(nn.Module):
             all_chains[:, k + 1, :] = (finals[k] + initials[k + 1]) / 2
         all_chains[:, K, :] = finals[K - 1]  # D
 
-        # ---- Post-process each transition: enforce single-effector change + binarize contacts ----
+        # ---- Post-process: enforce single-effector change + binarize contacts ----
+        # IMPORTANT: never overwrite the user-provided start (wp_0) or goal (wp_K).
+        # Only intermediate waypoints (1..K-1) may be edited.
         cs, ce = self._contact_start, self._contact_end
-        # Binarize contact dims for all waypoints (only intermediate ones; start/goal
-        # are user-provided and should already be valid)
+
+        # Binarize contact dims for INTERMEDIATE waypoints only
         for k in range(1, K):
             wp = all_chains[:, k, :]
             wp[:, cs:ce] = torch.where(
@@ -555,35 +599,76 @@ class UnifiedTransitionDiffusion(nn.Module):
             )
             all_chains[:, k, :] = wp
 
-        # For each adjacent pair, restrict change to a single effector based on
-        # contact flip (after binarization the flipped effector is well defined).
-        for k in range(K):
+        # Propagate single-effector constraint forward through transitions 0..K-2.
+        # For transition k (wp_a -> wp_b), the flipped effector is the one whose
+        # contact dim differs the most. Non-flipping effectors of wp_b are pinned
+        # to wp_a's values. This pins each intermediate waypoint to its predecessor.
+        # The last segment (k=K-1) is intentionally NOT modified here, so wp_K
+        # stays equal to the user-provided goal.
+        for k in range(K - 1):
             wp_a = all_chains[:, k, :]
             wp_b = all_chains[:, k + 1, :]
             ca = wp_a[:, cs:ce]
             cb = wp_b[:, cs:ce]
             change_pred = (cb - ca).abs().argmax(dim=-1)  # (B,)
-            delta = wp_b - wp_a
-            masked_delta = torch.zeros_like(delta)
+            new_wp_b = wp_a.clone()  # default: copy everything from wp_a
             for eff_idx in range(4):
                 mask = (change_pred == eff_idx)
                 if mask.any():
                     s, e = self._effector_slices[eff_idx]
-                    masked_delta[mask, s:e] = delta[mask, s:e]
-                    # Only the predicted effector's contact dim is allowed to flip
-                    masked_delta[mask, cs + eff_idx] = delta[mask, cs + eff_idx]
-            all_chains[:, k + 1, :] = wp_a + masked_delta
+                    # Allow this effector's pos + its contact dim to take wp_b's value
+                    new_wp_b[mask, s:e] = wp_b[mask, s:e]
+                    new_wp_b[mask, cs + eff_idx] = wp_b[mask, cs + eff_idx]
+            all_chains[:, k + 1, :] = new_wp_b
 
-        # Select best chain based on overlap consistency
+        # ---- Best chain selection (D: progress-aware multi-criterion) ----
+        # Score combines:
+        #   (1) overlap consistency between adjacent transition slots
+        #   (2) anchor mismatch on wp_{K-1} -> goal (intermediate before goal)
+        #   (3) monotone progress: each waypoint's distance to goal should decrease
+        #   (4) single-flip compliance per transition
         overlap_errors = []
         for k in range(K - 1):
-            err = torch.norm(finals[k] - initials[k + 1], dim=-1)  # (B,)
+            err = torch.norm(finals[k] - initials[k + 1], dim=-1)
             overlap_errors.append(err)
         if overlap_errors:
-            total_error = torch.stack(overlap_errors, dim=-1).sum(dim=-1)  # (B,)
-            best_idx = total_error.argmin().item()
+            overlap_total = torch.stack(overlap_errors, dim=-1).sum(dim=-1)
         else:
-            best_idx = 0
+            overlap_total = torch.zeros(B, device=device)
+
+        goal_b = goal_config.unsqueeze(0).expand(B, -1)
+        last_wp = all_chains[:, K - 1, :]
+        last_to_goal = torch.norm(last_wp - goal_b, dim=-1)
+
+        # Monotone progress on POSITION dims only (contacts have different scale)
+        pos_dims = []
+        for s, e in self._pos_slices:
+            pos_dims.extend(range(s, e))
+        pos_idx = torch.tensor(pos_dims, device=device, dtype=torch.long)
+        goal_pos = goal_b.index_select(-1, pos_idx)                  # (B, P)
+        wp_pos = all_chains.index_select(-1, pos_idx)                # (B, K+1, P)
+        d_to_goal = torch.norm(wp_pos - goal_pos.unsqueeze(1), dim=-1)  # (B, K+1)
+        # Penalize any step where distance to goal increases
+        delta_d = d_to_goal[:, 1:] - d_to_goal[:, :-1]               # (B, K)
+        regress_pen = torch.clamp(delta_d, min=0.0).sum(dim=-1)
+
+        # Single-flip compliance: each transition should flip exactly 1 contact
+        cs, ce = self._contact_start, self._contact_end
+        contacts_chain = all_chains[:, :, cs:ce]                     # (B, K+1, 4)
+        # Round to nearest valid value to count flips robustly
+        contacts_round = torch.where(
+            contacts_chain >= 0, torch.ones_like(contacts_chain), -torch.ones_like(contacts_chain)
+        )
+        n_flips = (contacts_round[:, 1:] != contacts_round[:, :-1]).float().sum(dim=-1)  # (B, K)
+        flip_violation = (n_flips - 1.0).abs().sum(dim=-1)
+
+        total_error = (
+            overlap_total
+            + 5.0 * last_to_goal
+            + 2.0 * regress_pen
+            + 0.5 * flip_violation
+        )
+        best_idx = total_error.argmin().item()
 
         best_chain = [all_chains[best_idx, i, :] for i in range(K + 1)]
 
@@ -591,7 +676,8 @@ class UnifiedTransitionDiffusion(nn.Module):
 
     def _chain_parallel(
         self, initials, finals, start, goal, K, B,
-        time_schedule, step_size, use_ddim, guidance_scale, device
+        time_schedule, step_size, use_ddim, guidance_scale, device,
+        progress_lambda_max: float = 0.0,
     ):
         """
         Parallel constrained denoising (stgl comp_pred_p_loop_n_same_t style).
@@ -601,8 +687,30 @@ class UnifiedTransitionDiffusion(nn.Module):
           2. Denoise all K transitions independently (with CFG)
           3. Store denoised results in a separate list
           4. Average connection points for constraint enforcement (GSC style)
-          5. Update
+          5. (Option B) Anchor connection-point positions toward the linear
+             interpolant between start and goal, with strength λ_t = λ_max·t/T
+             (strong when noisy, vanishing as t→0 so the model dominates the
+             clean signal). Only applied to position dims, not contacts.
+          6. Update
         """
+        # Pre-compute anchor target positions for each connection point
+        # connection k -> waypoint index k+1 in the chain (k = 0..K-2)
+        use_progress = progress_lambda_max > 0.0 and K >= 2
+        if use_progress:
+            pos_dims = []
+            for s, e in self._pos_slices:
+                pos_dims.extend(range(s, e))
+            pos_idx = torch.tensor(pos_dims, device=device, dtype=torch.long)
+            start_pos = start.index_select(-1, pos_idx)        # (B, P)
+            goal_pos = goal.index_select(-1, pos_idx)          # (B, P)
+            # alphas for k = 1..K-1 (connection points)
+            alphas = torch.linspace(
+                1.0 / K, (K - 1) / K, K - 1, device=device
+            ).view(K - 1, 1, 1)                                # (K-1, 1, 1)
+            # target_pos[k] for connection k -> wp_{k+1}
+            target_pos_all = (1.0 - alphas) * start_pos.unsqueeze(0) + alphas * goal_pos.unsqueeze(0)
+            # shape (K-1, B, P)
+
         for idx in range(len(time_schedule)):
             t_current = time_schedule[idx].item()
             t_next = t_current - step_size
@@ -687,8 +795,17 @@ class UnifiedTransitionDiffusion(nn.Module):
                     )
 
             # --- Enforce equality constraints: average connection points (GSC) ---
+            # (Option B) Optionally anchor the merged position toward the
+            # linear progress target. λ_t scales with current noise level.
+            if use_progress:
+                # t_current is the noise level just denoised; at idx=0 it ~= T-1.
+                lam_t = progress_lambda_max * (t_current / max(self.num_timesteps - 1, 1))
             for k in range(K - 1):
                 avg = (new_finals[k] + new_initials[k + 1]) / 2.0
+                if use_progress:
+                    avg_pos = avg.index_select(-1, pos_idx)
+                    blended_pos = (1.0 - lam_t) * avg_pos + lam_t * target_pos_all[k]
+                    avg = avg.index_copy(-1, pos_idx, blended_pos)
                 new_finals[k] = avg
                 new_initials[k + 1] = avg
 

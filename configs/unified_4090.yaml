@@ -1,0 +1,140 @@
+# ============================================================
+# Unified Transition Diffusion Model - Configuration (RTX 4090)
+# ============================================================
+# Optimized for RTX 4090 (24GB) with merged 15000-pair dataset
+# vs. 2080ti config:
+#   - 4x batch (512 -> 2048): saturate 4090 SMs
+#   - sqrt(4)x lr (2e-4 -> 4e-4): keep effective grad-noise scale
+#   - epochs / 2 (50000 -> 25000): same total samples-seen budget
+#   - wider MLP (768 -> 1024): use spare VRAM for capacity
+#   - shorter warmup, looser eval cadence
+# Pair this with the train.py BF16 + cudnn.benchmark patch (see notes
+# at the bottom of this file) to get the full ~3-4x throughput.
+# ============================================================
+
+data:
+  left_foot_dim: 3
+  right_foot_dim: 3
+  left_hand_dim: 3
+  right_hand_dim: 3
+  contact_dim: 4
+  config_dim: 16
+  transition_dim: 32
+  use_orientation: false
+
+  slices:
+    left_foot:  [0, 3]
+    right_foot: [3, 6]
+    left_hand:  [6, 9]
+    right_hand: [9, 12]
+    contacts:   [12, 16]
+
+  normalize: true
+
+# --- Model Architecture ---
+model:
+  architecture: "mlp"
+
+  # Transformer fields kept for compatibility (unused by mlp)
+  hidden_dim: 384
+  num_heads: 8
+  num_layers: 8
+  dropout: 0.1
+  time_embed_dim: 192
+
+  # 768 -> 1024 wide MLP. ~1.8x params, fits comfortably in 24GB.
+  mlp_hidden_dims: [1024, 1024, 1024, 1024]
+
+  # ---- Gated eps prediction ----
+  # Use softmax(change_logits) to gate eps_final toward eps_init for non-flip
+  # effectors. Eliminates reliance on hard-mask post-processing for pos
+  # consistency by baking the constraint into the architecture.
+  use_gated_eps: true
+  # Small floor keeps gradient flowing through "non-target" effectors during
+  # the random-init phase of the classifier. 0.05 = at most 5% leakage.
+  gate_floor: 0.05
+
+# --- Diffusion Process ---
+diffusion:
+  num_timesteps: 1000
+  beta_start: 0.0001
+  beta_end: 0.02
+  beta_schedule: "cosine"
+  prediction_type: "epsilon"
+
+  use_ddim: true
+  ddim_steps: 50
+
+# --- Training (saturate 4090) ---
+training:
+  # 4x bigger batch -> ~4x fewer steps per epoch, same wall time per epoch,
+  # better gradient SNR for diffusion training.
+  batch_size: 2048
+  # sqrt-scaling rule: lr scales with sqrt(batch_ratio) for better stability
+  # than full linear scaling at large diffusion batches.
+  learning_rate: 4.0e-4
+  weight_decay: 1.0e-5
+  # Halved relative to 2080ti: same total optimization budget at 4x batch.
+  num_epochs: 25000
+  # Shorter warmup since each step now sees 4x more data.
+  warmup_steps: 500
+
+  w_initial: 1.0
+  w_final: 1.0
+  p_uncond: 0.1
+
+  # Change mask classification loss weight
+  w_change_cls: 1.0
+  # Boost factor for changed effector dimensions in MSE loss
+  # NOTE: kept at 1.0 (no per-dim boost) so that the "non-changed effector"
+  # supervision signal isn't drowned out by the 5x weight on the flipping one.
+  w_changed_dim: 1.0
+
+  use_ema: true
+  ema_decay: 0.9999
+
+  # Translation augmentation: random 3D shift to all positions (in normalized space)
+  aug_trans_scale: 0.1
+
+  log_interval: 50
+  save_interval: 2000
+  # Eval is expensive (sample_transition x 256 x 2 modes); run less often
+  # so it doesn't dominate wall-clock when each train step is fast.
+  eval_interval: 500
+
+# --- Inference / Sampling ---
+sampling:
+  guidance_scale: 2.0
+  chain:
+    num_transitions: 3
+    constraint_weight: 0.5
+    mode: "parallel"
+
+# ============================================================
+# RECOMMENDED RUNTIME PATCHES (apply once to scripts/train.py)
+# ============================================================
+# To squeeze the last 1.5-2x out of the 4090, add the following to the
+# top of main() in scripts/train.py (one-time edit, applies to all configs):
+#
+#   torch.backends.cudnn.benchmark = True
+#   torch.set_float32_matmul_precision("high")   # enable TF32 matmul
+#
+# And wrap the forward + loss in BF16 autocast (4090 supports BF16 natively,
+# no GradScaler needed):
+#
+#   with torch.autocast(device_type="cuda", dtype=torch.bfloat16):
+#       losses = model.compute_loss(initial, final)
+#   loss = losses['loss']
+#   optimizer.zero_grad(set_to_none=True)
+#   loss.backward()
+#   ...
+#
+# Also recommended in data/dataset.py create_dataloader():
+#   DataLoader(..., pin_memory=True)
+# and in the train loop:
+#   initial = initial.to(device, non_blocking=True)
+#   final   = final.to(device, non_blocking=True)
+#
+# For an extra ~30% boost (after first compile pass):
+#   model = torch.compile(model, mode="reduce-overhead")
+# ============================================================

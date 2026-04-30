@@ -64,7 +64,9 @@ training:
   # Change mask classification loss weight
   w_change_cls: 1.0
   # Boost factor for changed effector dimensions in MSE loss
-  w_changed_dim: 5.0
+  # NOTE: kept at 1.0 (no per-dim boost) so that the "non-changed effector"
+  # supervision signal isn't drowned out by the 5x weight on the flipping one.
+  w_changed_dim: 1.0
 
   use_ema: true
   ema_decay: 0.9999
@@ -73,7 +75,7 @@ training:
   aug_trans_scale: 0.1
 
   log_interval: 50
-  save_interval: 200
+  save_interval: 2000
   eval_interval: 200
 
 # --- Inference / Sampling ---

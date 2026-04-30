@@ -62,6 +62,9 @@ def parse_args():
     parser.add_argument("--chain_mode", type=str, default="parallel",
                         choices=["parallel", "autoregressive"],
                         help="Chain sampling mode")
+    parser.add_argument("--progress_lambda", type=float, default=0.0,
+                        help="Chain progress anchor strength at t=T (0=disabled, "
+                             "try 0.05~0.2 for gentle linear interpolation guidance)")
 
     return parser.parse_args()
 
@@ -233,6 +236,7 @@ def sample_chain(model, normalizer, args, device, slices):
         use_ddim=True,
         ddim_steps=args.ddim_steps,
         guidance_scale=args.guidance_scale,
+        progress_lambda_max=args.progress_lambda,
     )
 
     # Denormalize best chain

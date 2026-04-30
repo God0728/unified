@@ -81,12 +81,20 @@ class EMAModel:
         self.backup = {}
 
 
-def evaluate(model, dataloader, device, num_eval_samples=8):
-    """Quick evaluation: compute validation loss and generate samples."""
+def evaluate(model, dataloader, device, num_eval_samples=8, eval_compliance_samples=256):
+    """Quick evaluation: compute validation loss and generate samples.
+
+    Also reports physical-prior compliance metrics:
+      - single-effector flip rate (exactly one contact flipped between init/final)
+      - position consistency rate (non-flipping effectors' pos drift < threshold)
+    Computed both with and without post-processing to expose the gap.
+    """
     model.eval()
     total_loss = 0
     total_loss_init = 0
     total_loss_final = 0
+    total_loss_cls = 0
+    total_cls_acc = 0
     num_batches = 0
 
     with torch.no_grad():
@@ -97,6 +105,8 @@ def evaluate(model, dataloader, device, num_eval_samples=8):
             total_loss += losses['loss'].item()
             total_loss_init += losses['loss_init']
             total_loss_final += losses['loss_final']
+            total_loss_cls += losses.get('loss_change_cls', 0.0)
+            total_cls_acc += losses.get('cls_acc', 0.0)
             num_batches += 1
             if num_batches >= 10:  # Limit eval batches
                 break
@@ -104,8 +114,10 @@ def evaluate(model, dataloader, device, num_eval_samples=8):
     avg_loss = total_loss / max(num_batches, 1)
     avg_loss_init = total_loss_init / max(num_batches, 1)
     avg_loss_final = total_loss_final / max(num_batches, 1)
+    avg_loss_cls = total_loss_cls / max(num_batches, 1)
+    avg_cls_acc = total_cls_acc / max(num_batches, 1)
 
-    # Generate sample transitions
+    # Generate sample transitions for visualization
     sample_initial, sample_final = model.sample_transition(
         num_samples=num_eval_samples,
         device=device,
@@ -113,13 +125,76 @@ def evaluate(model, dataloader, device, num_eval_samples=8):
         ddim_steps=50,
     )
 
+    # ---- Physical prior compliance metrics ----
+    # Sample a larger batch with and without post-processing to compute
+    # single-effector flip rate, position consistency rate, and the gap.
+    contact_start = model._contact_start
+    contact_end = model._contact_end
+    eff_slices = model._effector_slices
+    # In normalized space ([-1,1]). Pose span ~ 1.0–1.4 m maps to span 2,
+    # so 0.05 normalized ≈ 3.5–7 cm physical. This is a realistic threshold
+    # given the data's drift floor (p99 ~ 0.6 cm).
+    pos_thresh = 0.05  # was 0.01
+
+    def _compliance(ini: torch.Tensor, fin: torch.Tensor):
+        # Binarize contacts (defensive, in case postprocess was skipped)
+        ci = torch.where(ini[:, contact_start:contact_end] >= 0, 1.0, 0.0)
+        cf = torch.where(fin[:, contact_start:contact_end] >= 0, 1.0, 0.0)
+        flips = (ci != cf).sum(dim=-1)  # (B,)
+        single_flip = (flips == 1).float().mean().item()
+
+        # For position consistency: pick the flipping effector (if any),
+        # check that the other 3 effectors' pos drift < thresh.
+        flip_idx = (cf - ci).abs().argmax(dim=-1)  # (B,) which effector "most flipped"
+        all_consistent = torch.ones(ini.shape[0], dtype=torch.bool, device=ini.device)
+        for eff_idx in range(4):
+            mask = (flip_idx != eff_idx)  # samples where eff_idx is NOT the flipper
+            if mask.any():
+                s, e = eff_slices[eff_idx]
+                drift = (fin[mask, s:e] - ini[mask, s:e]).norm(dim=-1)
+                ok = drift < pos_thresh
+                # mark inconsistent samples
+                idx = torch.nonzero(mask, as_tuple=True)[0]
+                bad = idx[~ok]
+                all_consistent[bad] = False
+        pos_consistency = all_consistent.float().mean().item()
+        return single_flip, pos_consistency
+
+    with torch.no_grad():
+        ini_pp, fin_pp = model.sample_transition(
+            num_samples=eval_compliance_samples,
+            device=device,
+            use_ddim=True,
+            ddim_steps=50,
+            apply_postprocess=True,
+        )
+        ini_raw, fin_raw = model.sample_transition(
+            num_samples=eval_compliance_samples,
+            device=device,
+            use_ddim=True,
+            ddim_steps=50,
+            apply_postprocess=False,
+        )
+
+    flip_pp, pos_pp = _compliance(ini_pp, fin_pp)
+    flip_raw, pos_raw = _compliance(ini_raw, fin_raw)
+
     model.train()
     return {
         'val_loss': avg_loss,
         'val_loss_init': avg_loss_init,
         'val_loss_final': avg_loss_final,
+        'val_loss_change_cls': avg_loss_cls,
+        'val_cls_acc': avg_cls_acc,
         'sample_initial': sample_initial.cpu(),
         'sample_final': sample_final.cpu(),
+        # Compliance metrics
+        'single_flip_rate_pp': flip_pp,
+        'single_flip_rate_raw': flip_raw,
+        'single_flip_gap': flip_pp - flip_raw,
+        'pos_consistency_pp': pos_pp,
+        'pos_consistency_raw': pos_raw,
+        'pos_consistency_gap': pos_pp - pos_raw,
     }
 
 
@@ -259,6 +334,14 @@ def train(args):
             writer.add_scalar('train/loss_init', losses['loss_init'], global_step)
             writer.add_scalar('train/loss_final', losses['loss_final'], global_step)
             writer.add_scalar('train/loss_change_cls', losses.get('loss_change_cls', 0.0), global_step)
+            writer.add_scalar('train/cls_acc', losses.get('cls_acc', 0.0), global_step)
+            for bi in range(4):
+                key_loss = f'loss_init_bucket_{bi}'
+                key_acc = f'cls_acc_bucket_{bi}'
+                if key_loss in losses:
+                    writer.add_scalar(f'train/{key_loss}', losses[key_loss], global_step)
+                if key_acc in losses:
+                    writer.add_scalar(f'train/{key_acc}', losses[key_acc], global_step)
             writer.add_scalar('train/lr', scheduler.get_last_lr()[0], global_step)
 
         # Epoch summary
@@ -283,8 +366,23 @@ def train(args):
             eval_results = evaluate(model, dataloader, device)
             print(f"  [Eval] Val Loss: {eval_results['val_loss']:.4f} "
                   f"(init: {eval_results['val_loss_init']:.4f}, final: {eval_results['val_loss_final']:.4f})")
+            print(f"  [Eval] cls_acc: {eval_results['val_cls_acc']:.3f} | "
+                  f"flip_rate(pp/raw/gap): {eval_results['single_flip_rate_pp']:.3f}/"
+                  f"{eval_results['single_flip_rate_raw']:.3f}/"
+                  f"{eval_results['single_flip_gap']:+.3f} | "
+                  f"pos_cons(pp/raw/gap): {eval_results['pos_consistency_pp']:.3f}/"
+                  f"{eval_results['pos_consistency_raw']:.3f}/"
+                  f"{eval_results['pos_consistency_gap']:+.3f}")
 
             writer.add_scalar('eval/val_loss', eval_results['val_loss'], global_step)
+            writer.add_scalar('eval/val_loss_change_cls', eval_results['val_loss_change_cls'], global_step)
+            writer.add_scalar('eval/val_cls_acc', eval_results['val_cls_acc'], global_step)
+            writer.add_scalar('eval/single_flip_rate_pp', eval_results['single_flip_rate_pp'], global_step)
+            writer.add_scalar('eval/single_flip_rate_raw', eval_results['single_flip_rate_raw'], global_step)
+            writer.add_scalar('eval/single_flip_gap', eval_results['single_flip_gap'], global_step)
+            writer.add_scalar('eval/pos_consistency_pp', eval_results['pos_consistency_pp'], global_step)
+            writer.add_scalar('eval/pos_consistency_raw', eval_results['pos_consistency_raw'], global_step)
+            writer.add_scalar('eval/pos_consistency_gap', eval_results['pos_consistency_gap'], global_step)
 
             if ema is not None:
                 ema.restore(model)
@@ -318,7 +416,7 @@ def train(args):
                 ema.restore(model)
 
         # Save checkpoint
-        if (epoch + 1) % train_cfg.get('save_interval', 200) == 0:
+        if (epoch + 1) % train_cfg.get('save_interval', 1000) == 0:
             save_model = model
             if ema is not None:
                 ema.apply(model)

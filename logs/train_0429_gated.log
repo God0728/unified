@@ -1,0 +1,656 @@
+nohup: 忽略输入
+[Train] Device: cuda
+[Dataset] clean_non_flip: cleaned 15000/15000 pairs (skipped 0 non-single-flip pairs); pre-clean drift on non-flip effectors -> mean=0.0005 p99=0.0054 max=0.0209
+[Dataset] Loaded 30000 transition pairs from seiko_talos_0428.json
+  Config dim: 16
+  Original pairs: 7500, After augmentation: 30000
+[Train] Dataset: 30000 samples, 14 batches/epoch
+[Train] Model parameters: 15,213,860
+
+[Train] Starting training for 25000 epochs...
+  Batch size: 2048
+  Learning rate: 0.0004
+  Independent timesteps: YES (UWM style)
+  Conditioning: drop=0.15, ovlp=0.5, inpat=0.5
+
+  Epoch    1/25000 | Loss: 3.3855 (init: 0.9987, final: 0.9999, cls: 1.3869) | LR: 1.12e-05 | Time: 1.2s
+  Epoch   50/25000 | Loss: 1.1111 (init: 0.2424, final: 0.2766, cls: 0.5921) | LR: 4.00e-04 | Time: 0.7s
+  Epoch  100/25000 | Loss: 0.9598 (init: 0.1980, final: 0.2214, cls: 0.5404) | LR: 4.00e-04 | Time: 0.7s
+  Epoch  150/25000 | Loss: 0.8514 (init: 0.1659, final: 0.1944, cls: 0.4911) | LR: 4.00e-04 | Time: 0.7s
+  Epoch  200/25000 | Loss: 0.7941 (init: 0.1567, final: 0.1746, cls: 0.4629) | LR: 4.00e-04 | Time: 0.7s
+  Epoch  250/25000 | Loss: 0.7668 (init: 0.1477, final: 0.1652, cls: 0.4539) | LR: 4.00e-04 | Time: 0.7s
+  Epoch  300/25000 | Loss: 0.7527 (init: 0.1435, final: 0.1571, cls: 0.4521) | LR: 4.00e-04 | Time: 0.7s
+  Epoch  350/25000 | Loss: 0.7268 (init: 0.1370, final: 0.1535, cls: 0.4363) | LR: 4.00e-04 | Time: 0.7s
+  Epoch  400/25000 | Loss: 0.7230 (init: 0.1381, final: 0.1493, cls: 0.4356) | LR: 4.00e-04 | Time: 0.6s
+  Epoch  450/25000 | Loss: 0.7168 (init: 0.1338, final: 0.1493, cls: 0.4336) | LR: 4.00e-04 | Time: 0.6s
+  Epoch  500/25000 | Loss: 0.7089 (init: 0.1301, final: 0.1435, cls: 0.4353) | LR: 4.00e-04 | Time: 0.6s
+  [Eval] Val Loss: 2.3433 (init: 0.6785, final: 0.5391)
+  [Eval] cls_acc: 0.505 | flip_rate(pp/raw/gap): 0.484/0.266/+0.219 | pos_cons(pp/raw/gap): 0.777/0.000/+0.777
+  Epoch  550/25000 | Loss: 0.7068 (init: 0.1310, final: 0.1435, cls: 0.4322) | LR: 4.00e-04 | Time: 0.6s
+  Epoch  600/25000 | Loss: 0.7042 (init: 0.1280, final: 0.1393, cls: 0.4370) | LR: 4.00e-04 | Time: 0.7s
+  Epoch  650/25000 | Loss: 0.6871 (init: 0.1273, final: 0.1380, cls: 0.4218) | LR: 4.00e-04 | Time: 0.7s
+  Epoch  700/25000 | Loss: 0.6905 (init: 0.1254, final: 0.1392, cls: 0.4259) | LR: 4.00e-04 | Time: 0.7s
+  Epoch  750/25000 | Loss: 0.6834 (init: 0.1250, final: 0.1376, cls: 0.4208) | LR: 4.00e-04 | Time: 0.7s
+  Epoch  800/25000 | Loss: 0.6771 (init: 0.1228, final: 0.1352, cls: 0.4192) | LR: 4.00e-04 | Time: 0.7s
+  Epoch  850/25000 | Loss: 0.6759 (init: 0.1254, final: 0.1333, cls: 0.4172) | LR: 4.00e-04 | Time: 0.7s
+  Epoch  900/25000 | Loss: 0.6685 (init: 0.1202, final: 0.1307, cls: 0.4177) | LR: 4.00e-04 | Time: 0.7s
+  Epoch  950/25000 | Loss: 0.6723 (init: 0.1190, final: 0.1336, cls: 0.4197) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 1000/25000 | Loss: 0.6708 (init: 0.1198, final: 0.1305, cls: 0.4206) | LR: 4.00e-04 | Time: 0.6s
+  [Eval] Val Loss: 1.1226 (init: 0.3128, final: 0.2806)
+  [Eval] cls_acc: 0.787 | flip_rate(pp/raw/gap): 0.770/0.469/+0.301 | pos_cons(pp/raw/gap): 0.836/0.000/+0.836
+  [Snapshot] Saved epoch 1000 samples -> /home/hkcrc/yzjws/unified/checkpoints/0429_gated/snapshots/epoch_1000.npz
+  Epoch 1050/25000 | Loss: 0.6661 (init: 0.1156, final: 0.1319, cls: 0.4186) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 1100/25000 | Loss: 0.6680 (init: 0.1202, final: 0.1291, cls: 0.4188) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 1150/25000 | Loss: 0.6711 (init: 0.1202, final: 0.1281, cls: 0.4228) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 1200/25000 | Loss: 0.6654 (init: 0.1176, final: 0.1302, cls: 0.4176) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 1250/25000 | Loss: 0.6654 (init: 0.1184, final: 0.1257, cls: 0.4213) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 1300/25000 | Loss: 0.6514 (init: 0.1129, final: 0.1260, cls: 0.4125) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 1350/25000 | Loss: 0.6645 (init: 0.1155, final: 0.1294, cls: 0.4196) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 1400/25000 | Loss: 0.6628 (init: 0.1160, final: 0.1241, cls: 0.4227) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 1450/25000 | Loss: 0.6539 (init: 0.1151, final: 0.1243, cls: 0.4145) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 1500/25000 | Loss: 0.6568 (init: 0.1142, final: 0.1273, cls: 0.4154) | LR: 4.00e-04 | Time: 0.7s
+  [Eval] Val Loss: 0.8020 (init: 0.1753, final: 0.1891)
+  [Eval] cls_acc: 0.809 | flip_rate(pp/raw/gap): 0.871/0.656/+0.215 | pos_cons(pp/raw/gap): 0.922/0.000/+0.922
+  Epoch 1550/25000 | Loss: 0.6465 (init: 0.1137, final: 0.1210, cls: 0.4118) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 1600/25000 | Loss: 0.6541 (init: 0.1132, final: 0.1254, cls: 0.4155) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 1650/25000 | Loss: 0.6521 (init: 0.1126, final: 0.1187, cls: 0.4209) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 1700/25000 | Loss: 0.6489 (init: 0.1128, final: 0.1206, cls: 0.4156) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 1750/25000 | Loss: 0.6552 (init: 0.1138, final: 0.1212, cls: 0.4202) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 1800/25000 | Loss: 0.6501 (init: 0.1119, final: 0.1205, cls: 0.4177) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 1850/25000 | Loss: 0.6425 (init: 0.1117, final: 0.1201, cls: 0.4107) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 1900/25000 | Loss: 0.6439 (init: 0.1113, final: 0.1188, cls: 0.4138) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 1950/25000 | Loss: 0.6432 (init: 0.1110, final: 0.1192, cls: 0.4130) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 2000/25000 | Loss: 0.6382 (init: 0.1098, final: 0.1191, cls: 0.4094) | LR: 4.00e-04 | Time: 0.7s
+  [Eval] Val Loss: 0.6825 (init: 0.1316, final: 0.1354)
+  [Eval] cls_acc: 0.815 | flip_rate(pp/raw/gap): 0.930/0.695/+0.234 | pos_cons(pp/raw/gap): 0.953/0.000/+0.953
+  [Snapshot] Saved epoch 2000 samples -> /home/hkcrc/yzjws/unified/checkpoints/0429_gated/snapshots/epoch_2000.npz
+  [Save] New best model (loss=0.6382) -> /home/hkcrc/yzjws/unified/checkpoints/0429_gated/checkpoint_best.pt
+  Epoch 2050/25000 | Loss: 0.6505 (init: 0.1112, final: 0.1206, cls: 0.4187) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 2100/25000 | Loss: 0.6405 (init: 0.1116, final: 0.1193, cls: 0.4096) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 2150/25000 | Loss: 0.6455 (init: 0.1097, final: 0.1185, cls: 0.4173) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 2200/25000 | Loss: 0.6368 (init: 0.1109, final: 0.1172, cls: 0.4086) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 2250/25000 | Loss: 0.6382 (init: 0.1081, final: 0.1171, cls: 0.4130) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 2300/25000 | Loss: 0.6347 (init: 0.1094, final: 0.1168, cls: 0.4086) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 2350/25000 | Loss: 0.6389 (init: 0.1082, final: 0.1199, cls: 0.4108) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 2400/25000 | Loss: 0.6368 (init: 0.1074, final: 0.1176, cls: 0.4119) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 2450/25000 | Loss: 0.6324 (init: 0.1079, final: 0.1164, cls: 0.4082) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 2500/25000 | Loss: 0.6317 (init: 0.1077, final: 0.1194, cls: 0.4046) | LR: 4.00e-04 | Time: 0.7s
+  [Eval] Val Loss: 0.6379 (init: 0.1134, final: 0.1159)
+  [Eval] cls_acc: 0.818 | flip_rate(pp/raw/gap): 0.984/0.789/+0.195 | pos_cons(pp/raw/gap): 0.996/0.000/+0.996
+  Epoch 2550/25000 | Loss: 0.6330 (init: 0.1074, final: 0.1147, cls: 0.4109) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 2600/25000 | Loss: 0.6333 (init: 0.1082, final: 0.1186, cls: 0.4066) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 2650/25000 | Loss: 0.6325 (init: 0.1079, final: 0.1168, cls: 0.4078) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 2700/25000 | Loss: 0.6330 (init: 0.1109, final: 0.1165, cls: 0.4056) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 2750/25000 | Loss: 0.6301 (init: 0.1091, final: 0.1139, cls: 0.4071) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 2800/25000 | Loss: 0.6339 (init: 0.1059, final: 0.1161, cls: 0.4119) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 2850/25000 | Loss: 0.6281 (init: 0.1088, final: 0.1155, cls: 0.4038) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 2900/25000 | Loss: 0.6286 (init: 0.1066, final: 0.1167, cls: 0.4053) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 2950/25000 | Loss: 0.6290 (init: 0.1066, final: 0.1166, cls: 0.4058) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 3000/25000 | Loss: 0.6215 (init: 0.1089, final: 0.1128, cls: 0.3999) | LR: 4.00e-04 | Time: 0.7s
+  [Eval] Val Loss: 0.6110 (init: 0.1009, final: 0.1062)
+  [Eval] cls_acc: 0.818 | flip_rate(pp/raw/gap): 0.977/0.820/+0.156 | pos_cons(pp/raw/gap): 0.980/0.000/+0.980
+  [Snapshot] Saved epoch 3000 samples -> /home/hkcrc/yzjws/unified/checkpoints/0429_gated/snapshots/epoch_3000.npz
+  Epoch 3050/25000 | Loss: 0.6283 (init: 0.1084, final: 0.1131, cls: 0.4068) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 3100/25000 | Loss: 0.6287 (init: 0.1057, final: 0.1146, cls: 0.4084) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 3150/25000 | Loss: 0.6296 (init: 0.1062, final: 0.1138, cls: 0.4096) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 3200/25000 | Loss: 0.6326 (init: 0.1061, final: 0.1139, cls: 0.4126) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 3250/25000 | Loss: 0.6298 (init: 0.1064, final: 0.1171, cls: 0.4062) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 3300/25000 | Loss: 0.6168 (init: 0.1054, final: 0.1119, cls: 0.3995) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 3350/25000 | Loss: 0.6214 (init: 0.1062, final: 0.1137, cls: 0.4014) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 3400/25000 | Loss: 0.6217 (init: 0.1050, final: 0.1152, cls: 0.4015) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 3450/25000 | Loss: 0.6219 (init: 0.1064, final: 0.1142, cls: 0.4013) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 3500/25000 | Loss: 0.6160 (init: 0.1060, final: 0.1140, cls: 0.3960) | LR: 4.00e-04 | Time: 0.7s
+  [Eval] Val Loss: 0.5887 (init: 0.0935, final: 0.0974)
+  [Eval] cls_acc: 0.820 | flip_rate(pp/raw/gap): 0.945/0.883/+0.062 | pos_cons(pp/raw/gap): 0.965/0.000/+0.965
+  Epoch 3550/25000 | Loss: 0.6176 (init: 0.1077, final: 0.1123, cls: 0.3976) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 3600/25000 | Loss: 0.6257 (init: 0.1067, final: 0.1137, cls: 0.4053) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 3650/25000 | Loss: 0.6151 (init: 0.1038, final: 0.1140, cls: 0.3973) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 3700/25000 | Loss: 0.6119 (init: 0.1064, final: 0.1128, cls: 0.3926) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 3750/25000 | Loss: 0.6187 (init: 0.1063, final: 0.1133, cls: 0.3991) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 3800/25000 | Loss: 0.6093 (init: 0.1065, final: 0.1144, cls: 0.3884) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 3850/25000 | Loss: 0.6073 (init: 0.1073, final: 0.1119, cls: 0.3881) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 3900/25000 | Loss: 0.6188 (init: 0.1059, final: 0.1146, cls: 0.3983) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 3950/25000 | Loss: 0.6197 (init: 0.1073, final: 0.1128, cls: 0.3995) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 4000/25000 | Loss: 0.6125 (init: 0.1059, final: 0.1128, cls: 0.3938) | LR: 4.00e-04 | Time: 0.7s
+  [Eval] Val Loss: 0.5780 (init: 0.0923, final: 0.0923)
+  [Eval] cls_acc: 0.826 | flip_rate(pp/raw/gap): 0.969/0.891/+0.078 | pos_cons(pp/raw/gap): 0.973/0.000/+0.973
+  [Snapshot] Saved epoch 4000 samples -> /home/hkcrc/yzjws/unified/checkpoints/0429_gated/snapshots/epoch_4000.npz
+  [Save] New best model (loss=0.6125) -> /home/hkcrc/yzjws/unified/checkpoints/0429_gated/checkpoint_best.pt
+  Epoch 4050/25000 | Loss: 0.6087 (init: 0.1046, final: 0.1143, cls: 0.3898) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 4100/25000 | Loss: 0.6162 (init: 0.1084, final: 0.1126, cls: 0.3952) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 4150/25000 | Loss: 0.6079 (init: 0.1060, final: 0.1135, cls: 0.3883) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 4200/25000 | Loss: 0.6022 (init: 0.1042, final: 0.1137, cls: 0.3843) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 4250/25000 | Loss: 0.6041 (init: 0.1066, final: 0.1135, cls: 0.3840) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 4300/25000 | Loss: 0.6054 (init: 0.1053, final: 0.1134, cls: 0.3867) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 4350/25000 | Loss: 0.6054 (init: 0.1045, final: 0.1143, cls: 0.3866) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 4400/25000 | Loss: 0.5992 (init: 0.1077, final: 0.1131, cls: 0.3785) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 4450/25000 | Loss: 0.6039 (init: 0.1051, final: 0.1135, cls: 0.3853) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 4500/25000 | Loss: 0.5970 (init: 0.1054, final: 0.1131, cls: 0.3785) | LR: 4.00e-04 | Time: 0.7s
+  [Eval] Val Loss: 0.5642 (init: 0.0875, final: 0.0895)
+  [Eval] cls_acc: 0.830 | flip_rate(pp/raw/gap): 0.961/0.879/+0.082 | pos_cons(pp/raw/gap): 0.973/0.004/+0.969
+  Epoch 4550/25000 | Loss: 0.5996 (init: 0.1049, final: 0.1149, cls: 0.3798) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 4600/25000 | Loss: 0.5979 (init: 0.1047, final: 0.1119, cls: 0.3813) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 4650/25000 | Loss: 0.5882 (init: 0.1051, final: 0.1133, cls: 0.3698) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 4700/25000 | Loss: 0.5885 (init: 0.1046, final: 0.1147, cls: 0.3692) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 4750/25000 | Loss: 0.5873 (init: 0.1056, final: 0.1129, cls: 0.3689) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 4800/25000 | Loss: 0.5958 (init: 0.1048, final: 0.1136, cls: 0.3773) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 4850/25000 | Loss: 0.5868 (init: 0.1069, final: 0.1116, cls: 0.3683) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 4900/25000 | Loss: 0.5938 (init: 0.1045, final: 0.1128, cls: 0.3765) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 4950/25000 | Loss: 0.5868 (init: 0.1068, final: 0.1122, cls: 0.3679) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 5000/25000 | Loss: 0.5877 (init: 0.1064, final: 0.1111, cls: 0.3702) | LR: 4.00e-04 | Time: 0.6s
+  [Eval] Val Loss: 0.5418 (init: 0.0834, final: 0.0889)
+  [Eval] cls_acc: 0.835 | flip_rate(pp/raw/gap): 0.977/0.879/+0.098 | pos_cons(pp/raw/gap): 0.977/0.008/+0.969
+  [Snapshot] Saved epoch 5000 samples -> /home/hkcrc/yzjws/unified/checkpoints/0429_gated/snapshots/epoch_5000.npz
+  Epoch 5050/25000 | Loss: 0.5921 (init: 0.1052, final: 0.1138, cls: 0.3731) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 5100/25000 | Loss: 0.5822 (init: 0.1043, final: 0.1153, cls: 0.3626) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 5150/25000 | Loss: 0.5832 (init: 0.1054, final: 0.1128, cls: 0.3649) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 5200/25000 | Loss: 0.5819 (init: 0.1046, final: 0.1122, cls: 0.3651) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 5250/25000 | Loss: 0.5874 (init: 0.1056, final: 0.1146, cls: 0.3672) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 5300/25000 | Loss: 0.5735 (init: 0.1054, final: 0.1109, cls: 0.3572) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 5350/25000 | Loss: 0.5771 (init: 0.1043, final: 0.1125, cls: 0.3603) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 5400/25000 | Loss: 0.5803 (init: 0.1072, final: 0.1118, cls: 0.3612) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 5450/25000 | Loss: 0.5773 (init: 0.1037, final: 0.1108, cls: 0.3628) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 5500/25000 | Loss: 0.5795 (init: 0.1036, final: 0.1139, cls: 0.3620) | LR: 4.00e-04 | Time: 0.7s
+  [Eval] Val Loss: 0.5225 (init: 0.0828, final: 0.0865)
+  [Eval] cls_acc: 0.846 | flip_rate(pp/raw/gap): 0.965/0.910/+0.055 | pos_cons(pp/raw/gap): 0.977/0.004/+0.973
+  Epoch 5550/25000 | Loss: 0.5777 (init: 0.1046, final: 0.1108, cls: 0.3623) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 5600/25000 | Loss: 0.5698 (init: 0.1037, final: 0.1148, cls: 0.3513) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 5650/25000 | Loss: 0.5784 (init: 0.1051, final: 0.1121, cls: 0.3612) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 5700/25000 | Loss: 0.5704 (init: 0.1051, final: 0.1109, cls: 0.3544) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 5750/25000 | Loss: 0.5697 (init: 0.1045, final: 0.1120, cls: 0.3532) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 5800/25000 | Loss: 0.5696 (init: 0.1059, final: 0.1120, cls: 0.3517) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 5850/25000 | Loss: 0.5698 (init: 0.1064, final: 0.1126, cls: 0.3509) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 5900/25000 | Loss: 0.5637 (init: 0.1026, final: 0.1107, cls: 0.3504) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 5950/25000 | Loss: 0.5732 (init: 0.1075, final: 0.1120, cls: 0.3537) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 6000/25000 | Loss: 0.5694 (init: 0.1045, final: 0.1112, cls: 0.3538) | LR: 4.00e-04 | Time: 0.7s
+  [Eval] Val Loss: 0.5056 (init: 0.0819, final: 0.0830)
+  [Eval] cls_acc: 0.851 | flip_rate(pp/raw/gap): 0.980/0.922/+0.059 | pos_cons(pp/raw/gap): 0.988/0.012/+0.977
+  [Snapshot] Saved epoch 6000 samples -> /home/hkcrc/yzjws/unified/checkpoints/0429_gated/snapshots/epoch_6000.npz
+  [Save] New best model (loss=0.5694) -> /home/hkcrc/yzjws/unified/checkpoints/0429_gated/checkpoint_best.pt
+  Epoch 6050/25000 | Loss: 0.5665 (init: 0.1048, final: 0.1122, cls: 0.3495) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 6100/25000 | Loss: 0.5590 (init: 0.1053, final: 0.1131, cls: 0.3406) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 6150/25000 | Loss: 0.5655 (init: 0.1065, final: 0.1099, cls: 0.3491) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 6200/25000 | Loss: 0.5597 (init: 0.1053, final: 0.1130, cls: 0.3413) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 6250/25000 | Loss: 0.5631 (init: 0.1058, final: 0.1141, cls: 0.3433) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 6300/25000 | Loss: 0.5591 (init: 0.1026, final: 0.1131, cls: 0.3434) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 6350/25000 | Loss: 0.5588 (init: 0.1046, final: 0.1122, cls: 0.3420) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 6400/25000 | Loss: 0.5652 (init: 0.1054, final: 0.1103, cls: 0.3496) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 6450/25000 | Loss: 0.5587 (init: 0.1035, final: 0.1090, cls: 0.3463) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 6500/25000 | Loss: 0.5581 (init: 0.1048, final: 0.1133, cls: 0.3400) | LR: 4.00e-04 | Time: 0.7s
+  [Eval] Val Loss: 0.4894 (init: 0.0826, final: 0.0835)
+  [Eval] cls_acc: 0.860 | flip_rate(pp/raw/gap): 0.973/0.883/+0.090 | pos_cons(pp/raw/gap): 0.988/0.008/+0.980
+  Epoch 6550/25000 | Loss: 0.5614 (init: 0.1051, final: 0.1110, cls: 0.3453) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 6600/25000 | Loss: 0.5561 (init: 0.1034, final: 0.1111, cls: 0.3417) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 6650/25000 | Loss: 0.5619 (init: 0.1048, final: 0.1137, cls: 0.3433) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 6700/25000 | Loss: 0.5458 (init: 0.1023, final: 0.1099, cls: 0.3337) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 6750/25000 | Loss: 0.5479 (init: 0.1046, final: 0.1101, cls: 0.3332) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 6800/25000 | Loss: 0.5513 (init: 0.1056, final: 0.1097, cls: 0.3360) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 6850/25000 | Loss: 0.5533 (init: 0.1040, final: 0.1111, cls: 0.3381) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 6900/25000 | Loss: 0.5515 (init: 0.1053, final: 0.1102, cls: 0.3360) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 6950/25000 | Loss: 0.5445 (init: 0.1035, final: 0.1109, cls: 0.3301) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 7000/25000 | Loss: 0.5483 (init: 0.1048, final: 0.1119, cls: 0.3316) | LR: 4.00e-04 | Time: 0.6s
+  [Eval] Val Loss: 0.4786 (init: 0.0836, final: 0.0820)
+  [Eval] cls_acc: 0.862 | flip_rate(pp/raw/gap): 0.984/0.914/+0.070 | pos_cons(pp/raw/gap): 0.992/0.004/+0.988
+  [Snapshot] Saved epoch 7000 samples -> /home/hkcrc/yzjws/unified/checkpoints/0429_gated/snapshots/epoch_7000.npz
+  Epoch 7050/25000 | Loss: 0.5484 (init: 0.1039, final: 0.1082, cls: 0.3362) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 7100/25000 | Loss: 0.5539 (init: 0.1053, final: 0.1112, cls: 0.3374) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 7150/25000 | Loss: 0.5407 (init: 0.1025, final: 0.1110, cls: 0.3272) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 7200/25000 | Loss: 0.5421 (init: 0.1041, final: 0.1080, cls: 0.3300) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 7250/25000 | Loss: 0.5412 (init: 0.1030, final: 0.1103, cls: 0.3279) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 7300/25000 | Loss: 0.5469 (init: 0.1039, final: 0.1120, cls: 0.3310) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 7350/25000 | Loss: 0.5457 (init: 0.1047, final: 0.1092, cls: 0.3318) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 7400/25000 | Loss: 0.5524 (init: 0.1041, final: 0.1108, cls: 0.3375) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 7450/25000 | Loss: 0.5379 (init: 0.1028, final: 0.1096, cls: 0.3255) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 7500/25000 | Loss: 0.5469 (init: 0.1046, final: 0.1102, cls: 0.3320) | LR: 4.00e-04 | Time: 0.7s
+  [Eval] Val Loss: 0.4742 (init: 0.0813, final: 0.0791)
+  [Eval] cls_acc: 0.861 | flip_rate(pp/raw/gap): 0.941/0.922/+0.020 | pos_cons(pp/raw/gap): 0.957/0.008/+0.949
+  Epoch 7550/25000 | Loss: 0.5420 (init: 0.1039, final: 0.1109, cls: 0.3272) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 7600/25000 | Loss: 0.5457 (init: 0.1057, final: 0.1101, cls: 0.3300) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 7650/25000 | Loss: 0.5382 (init: 0.1042, final: 0.1097, cls: 0.3242) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 7700/25000 | Loss: 0.5409 (init: 0.1045, final: 0.1077, cls: 0.3286) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 7750/25000 | Loss: 0.5426 (init: 0.1046, final: 0.1106, cls: 0.3273) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 7800/25000 | Loss: 0.5382 (init: 0.1042, final: 0.1101, cls: 0.3239) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 7850/25000 | Loss: 0.5434 (init: 0.1043, final: 0.1129, cls: 0.3262) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 7900/25000 | Loss: 0.5391 (init: 0.1034, final: 0.1117, cls: 0.3240) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 7950/25000 | Loss: 0.5358 (init: 0.1029, final: 0.1091, cls: 0.3238) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 8000/25000 | Loss: 0.5384 (init: 0.1059, final: 0.1096, cls: 0.3230) | LR: 4.00e-04 | Time: 0.7s
+  [Eval] Val Loss: 0.4630 (init: 0.0816, final: 0.0805)
+  [Eval] cls_acc: 0.869 | flip_rate(pp/raw/gap): 0.969/0.941/+0.027 | pos_cons(pp/raw/gap): 0.980/0.012/+0.969
+  [Snapshot] Saved epoch 8000 samples -> /home/hkcrc/yzjws/unified/checkpoints/0429_gated/snapshots/epoch_8000.npz
+  [Save] New best model (loss=0.5384) -> /home/hkcrc/yzjws/unified/checkpoints/0429_gated/checkpoint_best.pt
+  Epoch 8050/25000 | Loss: 0.5417 (init: 0.1049, final: 0.1123, cls: 0.3245) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 8100/25000 | Loss: 0.5285 (init: 0.1020, final: 0.1077, cls: 0.3188) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 8150/25000 | Loss: 0.5329 (init: 0.1034, final: 0.1104, cls: 0.3190) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 8200/25000 | Loss: 0.5375 (init: 0.1034, final: 0.1101, cls: 0.3240) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 8250/25000 | Loss: 0.5416 (init: 0.1061, final: 0.1121, cls: 0.3234) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 8300/25000 | Loss: 0.5377 (init: 0.1047, final: 0.1092, cls: 0.3238) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 8350/25000 | Loss: 0.5338 (init: 0.1028, final: 0.1090, cls: 0.3220) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 8400/25000 | Loss: 0.5371 (init: 0.1042, final: 0.1119, cls: 0.3210) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 8450/25000 | Loss: 0.5310 (init: 0.1028, final: 0.1085, cls: 0.3197) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 8500/25000 | Loss: 0.5301 (init: 0.1059, final: 0.1093, cls: 0.3149) | LR: 4.00e-04 | Time: 0.6s
+  [Eval] Val Loss: 0.4578 (init: 0.0808, final: 0.0809)
+  [Eval] cls_acc: 0.869 | flip_rate(pp/raw/gap): 0.953/0.934/+0.020 | pos_cons(pp/raw/gap): 0.973/0.027/+0.945
+  Epoch 8550/25000 | Loss: 0.5326 (init: 0.1048, final: 0.1104, cls: 0.3175) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 8600/25000 | Loss: 0.5269 (init: 0.1027, final: 0.1084, cls: 0.3158) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 8650/25000 | Loss: 0.5304 (init: 0.1043, final: 0.1086, cls: 0.3176) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 8700/25000 | Loss: 0.5336 (init: 0.1049, final: 0.1121, cls: 0.3165) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 8750/25000 | Loss: 0.5267 (init: 0.1049, final: 0.1102, cls: 0.3117) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 8800/25000 | Loss: 0.5220 (init: 0.1044, final: 0.1087, cls: 0.3090) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 8850/25000 | Loss: 0.5232 (init: 0.1015, final: 0.1123, cls: 0.3094) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 8900/25000 | Loss: 0.5269 (init: 0.1034, final: 0.1090, cls: 0.3144) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 8950/25000 | Loss: 0.5170 (init: 0.1029, final: 0.1091, cls: 0.3050) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 9000/25000 | Loss: 0.5234 (init: 0.1029, final: 0.1103, cls: 0.3102) | LR: 4.00e-04 | Time: 0.7s
+  [Eval] Val Loss: 0.4424 (init: 0.0804, final: 0.0808)
+  [Eval] cls_acc: 0.877 | flip_rate(pp/raw/gap): 0.945/0.918/+0.027 | pos_cons(pp/raw/gap): 0.973/0.027/+0.945
+  [Snapshot] Saved epoch 9000 samples -> /home/hkcrc/yzjws/unified/checkpoints/0429_gated/snapshots/epoch_9000.npz
+  Epoch 9050/25000 | Loss: 0.5242 (init: 0.1038, final: 0.1102, cls: 0.3102) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 9100/25000 | Loss: 0.5240 (init: 0.1041, final: 0.1094, cls: 0.3106) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 9150/25000 | Loss: 0.5243 (init: 0.1055, final: 0.1093, cls: 0.3096) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 9200/25000 | Loss: 0.5219 (init: 0.1041, final: 0.1102, cls: 0.3077) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 9250/25000 | Loss: 0.5162 (init: 0.1035, final: 0.1082, cls: 0.3045) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 9300/25000 | Loss: 0.5232 (init: 0.1028, final: 0.1084, cls: 0.3120) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 9350/25000 | Loss: 0.5178 (init: 0.1044, final: 0.1079, cls: 0.3055) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 9400/25000 | Loss: 0.5215 (init: 0.1038, final: 0.1073, cls: 0.3104) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 9450/25000 | Loss: 0.5193 (init: 0.1044, final: 0.1094, cls: 0.3056) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 9500/25000 | Loss: 0.5176 (init: 0.1039, final: 0.1076, cls: 0.3061) | LR: 4.00e-04 | Time: 0.7s
+  [Eval] Val Loss: 0.4490 (init: 0.0799, final: 0.0810)
+  [Eval] cls_acc: 0.872 | flip_rate(pp/raw/gap): 0.949/0.906/+0.043 | pos_cons(pp/raw/gap): 0.973/0.031/+0.941
+  Epoch 9550/25000 | Loss: 0.5228 (init: 0.1018, final: 0.1088, cls: 0.3122) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 9600/25000 | Loss: 0.5186 (init: 0.1032, final: 0.1071, cls: 0.3083) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 9650/25000 | Loss: 0.5179 (init: 0.1033, final: 0.1100, cls: 0.3046) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 9700/25000 | Loss: 0.5205 (init: 0.1039, final: 0.1081, cls: 0.3084) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 9750/25000 | Loss: 0.5165 (init: 0.1028, final: 0.1083, cls: 0.3054) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 9800/25000 | Loss: 0.5271 (init: 0.1053, final: 0.1102, cls: 0.3116) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 9850/25000 | Loss: 0.5181 (init: 0.1049, final: 0.1098, cls: 0.3033) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 9900/25000 | Loss: 0.5190 (init: 0.1054, final: 0.1076, cls: 0.3060) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 9950/25000 | Loss: 0.5198 (init: 0.1049, final: 0.1080, cls: 0.3069) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 10000/25000 | Loss: 0.5078 (init: 0.1047, final: 0.1071, cls: 0.2959) | LR: 4.00e-04 | Time: 0.7s
+  [Eval] Val Loss: 0.4378 (init: 0.0778, final: 0.0791)
+  [Eval] cls_acc: 0.878 | flip_rate(pp/raw/gap): 0.949/0.906/+0.043 | pos_cons(pp/raw/gap): 0.965/0.039/+0.926
+  [Snapshot] Saved epoch 10000 samples -> /home/hkcrc/yzjws/unified/checkpoints/0429_gated/snapshots/epoch_10000.npz
+  [Save] New best model (loss=0.5078) -> /home/hkcrc/yzjws/unified/checkpoints/0429_gated/checkpoint_best.pt
+  Epoch 10050/25000 | Loss: 0.5109 (init: 0.1030, final: 0.1096, cls: 0.2982) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 10100/25000 | Loss: 0.5142 (init: 0.1026, final: 0.1081, cls: 0.3035) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 10150/25000 | Loss: 0.5167 (init: 0.1042, final: 0.1108, cls: 0.3018) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 10200/25000 | Loss: 0.5113 (init: 0.1026, final: 0.1081, cls: 0.3006) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 10250/25000 | Loss: 0.5168 (init: 0.1032, final: 0.1078, cls: 0.3059) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 10300/25000 | Loss: 0.5139 (init: 0.1043, final: 0.1080, cls: 0.3015) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 10350/25000 | Loss: 0.5053 (init: 0.1048, final: 0.1070, cls: 0.2935) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 10400/25000 | Loss: 0.5173 (init: 0.1024, final: 0.1087, cls: 0.3062) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 10450/25000 | Loss: 0.5153 (init: 0.1036, final: 0.1111, cls: 0.3006) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 10500/25000 | Loss: 0.5149 (init: 0.1021, final: 0.1119, cls: 0.3010) | LR: 4.00e-04 | Time: 0.8s
+  [Eval] Val Loss: 0.4295 (init: 0.0799, final: 0.0780)
+  [Eval] cls_acc: 0.880 | flip_rate(pp/raw/gap): 0.938/0.914/+0.023 | pos_cons(pp/raw/gap): 0.949/0.027/+0.922
+  Epoch 10550/25000 | Loss: 0.5053 (init: 0.1037, final: 0.1068, cls: 0.2948) | LR: 4.00e-04 | Time: 0.8s
+  Epoch 10600/25000 | Loss: 0.5130 (init: 0.1049, final: 0.1077, cls: 0.3004) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 10650/25000 | Loss: 0.5152 (init: 0.1044, final: 0.1090, cls: 0.3018) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 10700/25000 | Loss: 0.5036 (init: 0.1013, final: 0.1076, cls: 0.2946) | LR: 4.00e-04 | Time: 0.8s
+  Epoch 10750/25000 | Loss: 0.5109 (init: 0.1030, final: 0.1080, cls: 0.2999) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 10800/25000 | Loss: 0.5021 (init: 0.1027, final: 0.1071, cls: 0.2923) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 10850/25000 | Loss: 0.5166 (init: 0.1029, final: 0.1080, cls: 0.3057) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 10900/25000 | Loss: 0.5070 (init: 0.1046, final: 0.1082, cls: 0.2941) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 10950/25000 | Loss: 0.5065 (init: 0.1031, final: 0.1078, cls: 0.2956) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 11000/25000 | Loss: 0.5062 (init: 0.1056, final: 0.1080, cls: 0.2927) | LR: 4.00e-04 | Time: 0.7s
+  [Eval] Val Loss: 0.4247 (init: 0.0795, final: 0.0783)
+  [Eval] cls_acc: 0.881 | flip_rate(pp/raw/gap): 0.949/0.875/+0.074 | pos_cons(pp/raw/gap): 0.957/0.027/+0.930
+  [Snapshot] Saved epoch 11000 samples -> /home/hkcrc/yzjws/unified/checkpoints/0429_gated/snapshots/epoch_11000.npz
+  Epoch 11050/25000 | Loss: 0.5084 (init: 0.1039, final: 0.1073, cls: 0.2973) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 11100/25000 | Loss: 0.5033 (init: 0.1039, final: 0.1060, cls: 0.2934) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 11150/25000 | Loss: 0.5064 (init: 0.1035, final: 0.1075, cls: 0.2954) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 11200/25000 | Loss: 0.5084 (init: 0.1040, final: 0.1076, cls: 0.2968) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 11250/25000 | Loss: 0.5033 (init: 0.1024, final: 0.1077, cls: 0.2932) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 11300/25000 | Loss: 0.5057 (init: 0.1041, final: 0.1079, cls: 0.2937) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 11350/25000 | Loss: 0.5036 (init: 0.1053, final: 0.1069, cls: 0.2914) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 11400/25000 | Loss: 0.5004 (init: 0.1046, final: 0.1064, cls: 0.2894) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 11450/25000 | Loss: 0.5092 (init: 0.1034, final: 0.1082, cls: 0.2976) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 11500/25000 | Loss: 0.5046 (init: 0.1036, final: 0.1065, cls: 0.2945) | LR: 4.00e-04 | Time: 0.7s
+  [Eval] Val Loss: 0.4257 (init: 0.0799, final: 0.0793)
+  [Eval] cls_acc: 0.884 | flip_rate(pp/raw/gap): 0.945/0.910/+0.035 | pos_cons(pp/raw/gap): 0.961/0.051/+0.910
+  Epoch 11550/25000 | Loss: 0.5022 (init: 0.1055, final: 0.1071, cls: 0.2896) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 11600/25000 | Loss: 0.5018 (init: 0.1042, final: 0.1066, cls: 0.2909) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 11650/25000 | Loss: 0.5042 (init: 0.1029, final: 0.1087, cls: 0.2926) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 11700/25000 | Loss: 0.4994 (init: 0.1018, final: 0.1094, cls: 0.2882) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 11750/25000 | Loss: 0.5013 (init: 0.1035, final: 0.1072, cls: 0.2906) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 11800/25000 | Loss: 0.5051 (init: 0.1039, final: 0.1073, cls: 0.2939) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 11850/25000 | Loss: 0.4999 (init: 0.1036, final: 0.1098, cls: 0.2865) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 11900/25000 | Loss: 0.5007 (init: 0.1036, final: 0.1080, cls: 0.2892) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 11950/25000 | Loss: 0.5026 (init: 0.1023, final: 0.1077, cls: 0.2927) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 12000/25000 | Loss: 0.4955 (init: 0.1038, final: 0.1071, cls: 0.2846) | LR: 4.00e-04 | Time: 0.7s
+  [Eval] Val Loss: 0.4250 (init: 0.0794, final: 0.0795)
+  [Eval] cls_acc: 0.881 | flip_rate(pp/raw/gap): 0.941/0.938/+0.004 | pos_cons(pp/raw/gap): 0.949/0.023/+0.926
+  [Snapshot] Saved epoch 12000 samples -> /home/hkcrc/yzjws/unified/checkpoints/0429_gated/snapshots/epoch_12000.npz
+  [Save] New best model (loss=0.4955) -> /home/hkcrc/yzjws/unified/checkpoints/0429_gated/checkpoint_best.pt
+  Epoch 12050/25000 | Loss: 0.5000 (init: 0.1040, final: 0.1095, cls: 0.2864) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 12100/25000 | Loss: 0.4978 (init: 0.1045, final: 0.1066, cls: 0.2866) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 12150/25000 | Loss: 0.4894 (init: 0.1011, final: 0.1062, cls: 0.2821) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 12200/25000 | Loss: 0.5084 (init: 0.1039, final: 0.1078, cls: 0.2967) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 12250/25000 | Loss: 0.5038 (init: 0.1032, final: 0.1083, cls: 0.2923) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 12300/25000 | Loss: 0.5022 (init: 0.1024, final: 0.1094, cls: 0.2904) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 12350/25000 | Loss: 0.4921 (init: 0.1024, final: 0.1081, cls: 0.2816) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 12400/25000 | Loss: 0.4982 (init: 0.1044, final: 0.1072, cls: 0.2867) | LR: 4.00e-04 | Time: 0.8s
+  Epoch 12450/25000 | Loss: 0.5000 (init: 0.1041, final: 0.1074, cls: 0.2885) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 12500/25000 | Loss: 0.4957 (init: 0.1034, final: 0.1069, cls: 0.2854) | LR: 4.00e-04 | Time: 0.7s
+  [Eval] Val Loss: 0.4085 (init: 0.0784, final: 0.0781)
+  [Eval] cls_acc: 0.888 | flip_rate(pp/raw/gap): 0.949/0.930/+0.020 | pos_cons(pp/raw/gap): 0.969/0.031/+0.938
+  Epoch 12550/25000 | Loss: 0.4950 (init: 0.1034, final: 0.1058, cls: 0.2858) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 12600/25000 | Loss: 0.4960 (init: 0.1024, final: 0.1076, cls: 0.2861) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 12650/25000 | Loss: 0.4950 (init: 0.1027, final: 0.1088, cls: 0.2834) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 12700/25000 | Loss: 0.4943 (init: 0.1032, final: 0.1081, cls: 0.2831) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 12750/25000 | Loss: 0.4946 (init: 0.1036, final: 0.1076, cls: 0.2834) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 12800/25000 | Loss: 0.4894 (init: 0.1024, final: 0.1072, cls: 0.2798) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 12850/25000 | Loss: 0.4941 (init: 0.1038, final: 0.1101, cls: 0.2803) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 12900/25000 | Loss: 0.4935 (init: 0.1037, final: 0.1085, cls: 0.2812) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 12950/25000 | Loss: 0.4941 (init: 0.1035, final: 0.1081, cls: 0.2825) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 13000/25000 | Loss: 0.5018 (init: 0.1020, final: 0.1097, cls: 0.2901) | LR: 4.00e-04 | Time: 0.7s
+  [Eval] Val Loss: 0.4145 (init: 0.0809, final: 0.0788)
+  [Eval] cls_acc: 0.885 | flip_rate(pp/raw/gap): 0.922/0.914/+0.008 | pos_cons(pp/raw/gap): 0.945/0.043/+0.902
+  [Snapshot] Saved epoch 13000 samples -> /home/hkcrc/yzjws/unified/checkpoints/0429_gated/snapshots/epoch_13000.npz
+  Epoch 13050/25000 | Loss: 0.4900 (init: 0.1023, final: 0.1079, cls: 0.2798) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 13100/25000 | Loss: 0.4945 (init: 0.1023, final: 0.1080, cls: 0.2842) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 13150/25000 | Loss: 0.4935 (init: 0.1023, final: 0.1048, cls: 0.2863) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 13200/25000 | Loss: 0.4870 (init: 0.1017, final: 0.1075, cls: 0.2778) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 13250/25000 | Loss: 0.4896 (init: 0.1019, final: 0.1082, cls: 0.2795) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 13300/25000 | Loss: 0.4918 (init: 0.1021, final: 0.1074, cls: 0.2823) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 13350/25000 | Loss: 0.4844 (init: 0.1031, final: 0.1055, cls: 0.2757) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 13400/25000 | Loss: 0.4977 (init: 0.1035, final: 0.1086, cls: 0.2857) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 13450/25000 | Loss: 0.4907 (init: 0.1024, final: 0.1067, cls: 0.2816) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 13500/25000 | Loss: 0.4942 (init: 0.1038, final: 0.1070, cls: 0.2833) | LR: 4.00e-04 | Time: 0.7s
+  [Eval] Val Loss: 0.4111 (init: 0.0802, final: 0.0785)
+  [Eval] cls_acc: 0.885 | flip_rate(pp/raw/gap): 0.891/0.895/-0.004 | pos_cons(pp/raw/gap): 0.926/0.055/+0.871
+  Epoch 13550/25000 | Loss: 0.4895 (init: 0.1030, final: 0.1063, cls: 0.2802) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 13600/25000 | Loss: 0.4880 (init: 0.1016, final: 0.1076, cls: 0.2788) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 13650/25000 | Loss: 0.4889 (init: 0.1018, final: 0.1094, cls: 0.2778) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 13700/25000 | Loss: 0.4903 (init: 0.1030, final: 0.1096, cls: 0.2777) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 13750/25000 | Loss: 0.4848 (init: 0.1029, final: 0.1058, cls: 0.2761) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 13800/25000 | Loss: 0.4894 (init: 0.1041, final: 0.1073, cls: 0.2779) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 13850/25000 | Loss: 0.4926 (init: 0.1026, final: 0.1078, cls: 0.2822) | LR: 4.00e-04 | Time: 0.9s
+  Epoch 13900/25000 | Loss: 0.4856 (init: 0.1026, final: 0.1057, cls: 0.2772) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 13950/25000 | Loss: 0.4828 (init: 0.1013, final: 0.1060, cls: 0.2755) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 14000/25000 | Loss: 0.4930 (init: 0.1045, final: 0.1069, cls: 0.2816) | LR: 4.00e-04 | Time: 0.7s
+  [Eval] Val Loss: 0.4159 (init: 0.0794, final: 0.0796)
+  [Eval] cls_acc: 0.883 | flip_rate(pp/raw/gap): 0.949/0.914/+0.035 | pos_cons(pp/raw/gap): 0.953/0.059/+0.895
+  [Snapshot] Saved epoch 14000 samples -> /home/hkcrc/yzjws/unified/checkpoints/0429_gated/snapshots/epoch_14000.npz
+  [Save] New best model (loss=0.4930) -> /home/hkcrc/yzjws/unified/checkpoints/0429_gated/checkpoint_best.pt
+  Epoch 14050/25000 | Loss: 0.4869 (init: 0.1030, final: 0.1072, cls: 0.2767) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 14100/25000 | Loss: 0.4773 (init: 0.1020, final: 0.1054, cls: 0.2699) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 14150/25000 | Loss: 0.4906 (init: 0.1029, final: 0.1094, cls: 0.2783) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 14200/25000 | Loss: 0.4872 (init: 0.1020, final: 0.1078, cls: 0.2774) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 14250/25000 | Loss: 0.4887 (init: 0.1001, final: 0.1083, cls: 0.2802) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 14300/25000 | Loss: 0.4933 (init: 0.1030, final: 0.1072, cls: 0.2831) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 14350/25000 | Loss: 0.4920 (init: 0.1032, final: 0.1093, cls: 0.2795) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 14400/25000 | Loss: 0.4842 (init: 0.1033, final: 0.1054, cls: 0.2754) | LR: 4.00e-04 | Time: 0.8s
+  Epoch 14450/25000 | Loss: 0.4870 (init: 0.1038, final: 0.1067, cls: 0.2765) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 14500/25000 | Loss: 0.4868 (init: 0.1011, final: 0.1074, cls: 0.2783) | LR: 4.00e-04 | Time: 0.7s
+  [Eval] Val Loss: 0.4028 (init: 0.0807, final: 0.0787)
+  [Eval] cls_acc: 0.891 | flip_rate(pp/raw/gap): 0.910/0.930/-0.020 | pos_cons(pp/raw/gap): 0.926/0.059/+0.867
+  Epoch 14550/25000 | Loss: 0.4838 (init: 0.1042, final: 0.1057, cls: 0.2739) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 14600/25000 | Loss: 0.4844 (init: 0.1022, final: 0.1084, cls: 0.2738) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 14650/25000 | Loss: 0.4967 (init: 0.1043, final: 0.1079, cls: 0.2845) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 14700/25000 | Loss: 0.4883 (init: 0.1019, final: 0.1063, cls: 0.2802) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 14750/25000 | Loss: 0.4855 (init: 0.1037, final: 0.1039, cls: 0.2780) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 14800/25000 | Loss: 0.4833 (init: 0.1030, final: 0.1075, cls: 0.2728) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 14850/25000 | Loss: 0.4878 (init: 0.1038, final: 0.1091, cls: 0.2748) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 14900/25000 | Loss: 0.4850 (init: 0.1027, final: 0.1055, cls: 0.2769) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 14950/25000 | Loss: 0.4826 (init: 0.1013, final: 0.1082, cls: 0.2731) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 15000/25000 | Loss: 0.4851 (init: 0.1031, final: 0.1062, cls: 0.2757) | LR: 4.00e-04 | Time: 0.7s
+  [Eval] Val Loss: 0.4019 (init: 0.0793, final: 0.0788)
+  [Eval] cls_acc: 0.894 | flip_rate(pp/raw/gap): 0.902/0.895/+0.008 | pos_cons(pp/raw/gap): 0.930/0.035/+0.895
+  [Snapshot] Saved epoch 15000 samples -> /home/hkcrc/yzjws/unified/checkpoints/0429_gated/snapshots/epoch_15000.npz
+  Epoch 15050/25000 | Loss: 0.4771 (init: 0.1017, final: 0.1063, cls: 0.2690) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 15100/25000 | Loss: 0.4880 (init: 0.1024, final: 0.1070, cls: 0.2785) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 15150/25000 | Loss: 0.4886 (init: 0.1032, final: 0.1074, cls: 0.2780) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 15200/25000 | Loss: 0.4825 (init: 0.1030, final: 0.1066, cls: 0.2729) | LR: 4.00e-04 | Time: 0.8s
+  Epoch 15250/25000 | Loss: 0.4796 (init: 0.1039, final: 0.1051, cls: 0.2706) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 15300/25000 | Loss: 0.4840 (init: 0.1023, final: 0.1050, cls: 0.2767) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 15350/25000 | Loss: 0.4798 (init: 0.1002, final: 0.1056, cls: 0.2740) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 15400/25000 | Loss: 0.4843 (init: 0.1037, final: 0.1056, cls: 0.2751) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 15450/25000 | Loss: 0.4754 (init: 0.0996, final: 0.1052, cls: 0.2706) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 15500/25000 | Loss: 0.4792 (init: 0.1024, final: 0.1053, cls: 0.2715) | LR: 4.00e-04 | Time: 0.7s
+  [Eval] Val Loss: 0.3962 (init: 0.0797, final: 0.0774)
+  [Eval] cls_acc: 0.892 | flip_rate(pp/raw/gap): 0.922/0.898/+0.023 | pos_cons(pp/raw/gap): 0.938/0.086/+0.852
+  Epoch 15550/25000 | Loss: 0.4845 (init: 0.1015, final: 0.1071, cls: 0.2758) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 15600/25000 | Loss: 0.4826 (init: 0.1024, final: 0.1061, cls: 0.2741) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 15650/25000 | Loss: 0.4863 (init: 0.1037, final: 0.1080, cls: 0.2746) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 15700/25000 | Loss: 0.4777 (init: 0.1001, final: 0.1078, cls: 0.2697) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 15750/25000 | Loss: 0.4871 (init: 0.1017, final: 0.1067, cls: 0.2787) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 15800/25000 | Loss: 0.4889 (init: 0.1035, final: 0.1077, cls: 0.2777) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 15850/25000 | Loss: 0.4871 (init: 0.1031, final: 0.1053, cls: 0.2787) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 15900/25000 | Loss: 0.4733 (init: 0.1032, final: 0.1038, cls: 0.2663) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 15950/25000 | Loss: 0.4840 (init: 0.1034, final: 0.1082, cls: 0.2725) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 16000/25000 | Loss: 0.4829 (init: 0.1011, final: 0.1085, cls: 0.2733) | LR: 4.00e-04 | Time: 0.7s
+  [Eval] Val Loss: 0.3932 (init: 0.0798, final: 0.0772)
+  [Eval] cls_acc: 0.895 | flip_rate(pp/raw/gap): 0.898/0.910/-0.012 | pos_cons(pp/raw/gap): 0.918/0.066/+0.852
+  [Snapshot] Saved epoch 16000 samples -> /home/hkcrc/yzjws/unified/checkpoints/0429_gated/snapshots/epoch_16000.npz
+  [Save] New best model (loss=0.4829) -> /home/hkcrc/yzjws/unified/checkpoints/0429_gated/checkpoint_best.pt
+  Epoch 16050/25000 | Loss: 0.4705 (init: 0.1016, final: 0.1034, cls: 0.2656) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 16100/25000 | Loss: 0.4747 (init: 0.1033, final: 0.1039, cls: 0.2675) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 16150/25000 | Loss: 0.4806 (init: 0.1027, final: 0.1059, cls: 0.2720) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 16200/25000 | Loss: 0.4775 (init: 0.1020, final: 0.1049, cls: 0.2705) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 16250/25000 | Loss: 0.4783 (init: 0.1027, final: 0.1060, cls: 0.2696) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 16300/25000 | Loss: 0.4821 (init: 0.1043, final: 0.1064, cls: 0.2713) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 16350/25000 | Loss: 0.4760 (init: 0.1013, final: 0.1056, cls: 0.2690) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 16400/25000 | Loss: 0.4743 (init: 0.0993, final: 0.1052, cls: 0.2698) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 16450/25000 | Loss: 0.4834 (init: 0.0998, final: 0.1090, cls: 0.2746) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 16500/25000 | Loss: 0.4758 (init: 0.1032, final: 0.1048, cls: 0.2678) | LR: 4.00e-04 | Time: 0.7s
+  [Eval] Val Loss: 0.4020 (init: 0.0822, final: 0.0781)
+  [Eval] cls_acc: 0.890 | flip_rate(pp/raw/gap): 0.934/0.926/+0.008 | pos_cons(pp/raw/gap): 0.945/0.074/+0.871
+  Epoch 16550/25000 | Loss: 0.4801 (init: 0.1019, final: 0.1060, cls: 0.2723) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 16600/25000 | Loss: 0.4839 (init: 0.1021, final: 0.1061, cls: 0.2757) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 16650/25000 | Loss: 0.4762 (init: 0.1014, final: 0.1056, cls: 0.2693) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 16700/25000 | Loss: 0.4843 (init: 0.1046, final: 0.1053, cls: 0.2744) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 16750/25000 | Loss: 0.4785 (init: 0.1039, final: 0.1054, cls: 0.2692) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 16800/25000 | Loss: 0.4824 (init: 0.1038, final: 0.1084, cls: 0.2702) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 16850/25000 | Loss: 0.4774 (init: 0.1032, final: 0.1052, cls: 0.2690) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 16900/25000 | Loss: 0.4743 (init: 0.1018, final: 0.1057, cls: 0.2668) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 16950/25000 | Loss: 0.4765 (init: 0.1036, final: 0.1047, cls: 0.2682) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 17000/25000 | Loss: 0.4745 (init: 0.1029, final: 0.1070, cls: 0.2647) | LR: 4.00e-04 | Time: 0.7s
+  [Eval] Val Loss: 0.3984 (init: 0.0813, final: 0.0774)
+  [Eval] cls_acc: 0.892 | flip_rate(pp/raw/gap): 0.906/0.910/-0.004 | pos_cons(pp/raw/gap): 0.914/0.062/+0.852
+  [Snapshot] Saved epoch 17000 samples -> /home/hkcrc/yzjws/unified/checkpoints/0429_gated/snapshots/epoch_17000.npz
+  Epoch 17050/25000 | Loss: 0.4734 (init: 0.1007, final: 0.1061, cls: 0.2666) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 17100/25000 | Loss: 0.4773 (init: 0.1020, final: 0.1073, cls: 0.2681) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 17150/25000 | Loss: 0.4720 (init: 0.1010, final: 0.1042, cls: 0.2668) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 17200/25000 | Loss: 0.4776 (init: 0.1019, final: 0.1059, cls: 0.2699) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 17250/25000 | Loss: 0.4795 (init: 0.1025, final: 0.1048, cls: 0.2721) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 17300/25000 | Loss: 0.4739 (init: 0.1003, final: 0.1056, cls: 0.2680) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 17350/25000 | Loss: 0.4856 (init: 0.1037, final: 0.1067, cls: 0.2752) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 17400/25000 | Loss: 0.4789 (init: 0.1013, final: 0.1070, cls: 0.2706) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 17450/25000 | Loss: 0.4816 (init: 0.1035, final: 0.1073, cls: 0.2708) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 17500/25000 | Loss: 0.4738 (init: 0.1008, final: 0.1048, cls: 0.2681) | LR: 4.00e-04 | Time: 0.7s
+  [Eval] Val Loss: 0.3979 (init: 0.0807, final: 0.0775)
+  [Eval] cls_acc: 0.892 | flip_rate(pp/raw/gap): 0.930/0.910/+0.020 | pos_cons(pp/raw/gap): 0.953/0.078/+0.875
+  Epoch 17550/25000 | Loss: 0.4676 (init: 0.1025, final: 0.1039, cls: 0.2612) | LR: 4.00e-04 | Time: 0.8s
+  Epoch 17600/25000 | Loss: 0.4778 (init: 0.1026, final: 0.1070, cls: 0.2682) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 17650/25000 | Loss: 0.4745 (init: 0.1007, final: 0.1080, cls: 0.2657) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 17700/25000 | Loss: 0.4740 (init: 0.1024, final: 0.1061, cls: 0.2655) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 17750/25000 | Loss: 0.4782 (init: 0.1019, final: 0.1065, cls: 0.2698) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 17800/25000 | Loss: 0.4790 (init: 0.1009, final: 0.1062, cls: 0.2719) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 17850/25000 | Loss: 0.4739 (init: 0.1028, final: 0.1044, cls: 0.2667) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 17900/25000 | Loss: 0.4674 (init: 0.1018, final: 0.1050, cls: 0.2606) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 17950/25000 | Loss: 0.4733 (init: 0.1016, final: 0.1050, cls: 0.2668) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 18000/25000 | Loss: 0.4769 (init: 0.1008, final: 0.1051, cls: 0.2709) | LR: 4.00e-04 | Time: 0.7s
+  [Eval] Val Loss: 0.3978 (init: 0.0803, final: 0.0776)
+  [Eval] cls_acc: 0.893 | flip_rate(pp/raw/gap): 0.902/0.938/-0.035 | pos_cons(pp/raw/gap): 0.910/0.086/+0.824
+  [Snapshot] Saved epoch 18000 samples -> /home/hkcrc/yzjws/unified/checkpoints/0429_gated/snapshots/epoch_18000.npz
+  [Save] New best model (loss=0.4769) -> /home/hkcrc/yzjws/unified/checkpoints/0429_gated/checkpoint_best.pt
+  Epoch 18050/25000 | Loss: 0.4783 (init: 0.1005, final: 0.1072, cls: 0.2706) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 18100/25000 | Loss: 0.4746 (init: 0.1025, final: 0.1061, cls: 0.2660) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 18150/25000 | Loss: 0.4763 (init: 0.1016, final: 0.1057, cls: 0.2691) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 18200/25000 | Loss: 0.4782 (init: 0.1011, final: 0.1069, cls: 0.2702) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 18250/25000 | Loss: 0.4724 (init: 0.1020, final: 0.1056, cls: 0.2649) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 18300/25000 | Loss: 0.4757 (init: 0.1023, final: 0.1072, cls: 0.2662) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 18350/25000 | Loss: 0.4701 (init: 0.1015, final: 0.1050, cls: 0.2636) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 18400/25000 | Loss: 0.4733 (init: 0.1004, final: 0.1047, cls: 0.2681) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 18450/25000 | Loss: 0.4811 (init: 0.0994, final: 0.1050, cls: 0.2767) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 18500/25000 | Loss: 0.4757 (init: 0.1016, final: 0.1066, cls: 0.2675) | LR: 4.00e-04 | Time: 0.7s
+  [Eval] Val Loss: 0.3955 (init: 0.0797, final: 0.0763)
+  [Eval] cls_acc: 0.893 | flip_rate(pp/raw/gap): 0.922/0.918/+0.004 | pos_cons(pp/raw/gap): 0.926/0.078/+0.848
+  Epoch 18550/25000 | Loss: 0.4755 (init: 0.1018, final: 0.1059, cls: 0.2678) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 18600/25000 | Loss: 0.4705 (init: 0.1006, final: 0.1049, cls: 0.2649) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 18650/25000 | Loss: 0.4744 (init: 0.1030, final: 0.1052, cls: 0.2662) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 18700/25000 | Loss: 0.4703 (init: 0.1015, final: 0.1045, cls: 0.2643) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 18750/25000 | Loss: 0.4725 (init: 0.1012, final: 0.1037, cls: 0.2676) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 18800/25000 | Loss: 0.4690 (init: 0.1000, final: 0.1054, cls: 0.2636) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 18850/25000 | Loss: 0.4758 (init: 0.1034, final: 0.1041, cls: 0.2683) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 18900/25000 | Loss: 0.4689 (init: 0.1002, final: 0.1054, cls: 0.2633) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 18950/25000 | Loss: 0.4681 (init: 0.1012, final: 0.1056, cls: 0.2613) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 19000/25000 | Loss: 0.4734 (init: 0.1019, final: 0.1085, cls: 0.2631) | LR: 4.00e-04 | Time: 0.7s
+  [Eval] Val Loss: 0.3996 (init: 0.0810, final: 0.0781)
+  [Eval] cls_acc: 0.889 | flip_rate(pp/raw/gap): 0.895/0.941/-0.047 | pos_cons(pp/raw/gap): 0.910/0.062/+0.848
+  [Snapshot] Saved epoch 19000 samples -> /home/hkcrc/yzjws/unified/checkpoints/0429_gated/snapshots/epoch_19000.npz
+  Epoch 19050/25000 | Loss: 0.4743 (init: 0.1037, final: 0.1039, cls: 0.2667) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 19100/25000 | Loss: 0.4704 (init: 0.1028, final: 0.1044, cls: 0.2633) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 19150/25000 | Loss: 0.4765 (init: 0.1026, final: 0.1060, cls: 0.2679) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 19200/25000 | Loss: 0.4719 (init: 0.1004, final: 0.1075, cls: 0.2641) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 19250/25000 | Loss: 0.4783 (init: 0.1024, final: 0.1066, cls: 0.2693) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 19300/25000 | Loss: 0.4713 (init: 0.1025, final: 0.1044, cls: 0.2644) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 19350/25000 | Loss: 0.4700 (init: 0.1009, final: 0.1055, cls: 0.2636) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 19400/25000 | Loss: 0.4709 (init: 0.1035, final: 0.1041, cls: 0.2633) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 19450/25000 | Loss: 0.4709 (init: 0.1012, final: 0.1032, cls: 0.2666) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 19500/25000 | Loss: 0.4642 (init: 0.1029, final: 0.1036, cls: 0.2577) | LR: 4.00e-04 | Time: 0.7s
+  [Eval] Val Loss: 0.3974 (init: 0.0805, final: 0.0765)
+  [Eval] cls_acc: 0.892 | flip_rate(pp/raw/gap): 0.891/0.898/-0.008 | pos_cons(pp/raw/gap): 0.914/0.090/+0.824
+  Epoch 19550/25000 | Loss: 0.4688 (init: 0.0992, final: 0.1053, cls: 0.2643) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 19600/25000 | Loss: 0.4695 (init: 0.1008, final: 0.1070, cls: 0.2617) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 19650/25000 | Loss: 0.4692 (init: 0.1000, final: 0.1053, cls: 0.2639) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 19700/25000 | Loss: 0.4715 (init: 0.1014, final: 0.1052, cls: 0.2649) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 19750/25000 | Loss: 0.4654 (init: 0.1026, final: 0.1021, cls: 0.2607) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 19800/25000 | Loss: 0.4709 (init: 0.1014, final: 0.1047, cls: 0.2647) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 19850/25000 | Loss: 0.4690 (init: 0.1035, final: 0.1051, cls: 0.2605) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 19900/25000 | Loss: 0.4697 (init: 0.1028, final: 0.1049, cls: 0.2620) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 19950/25000 | Loss: 0.4648 (init: 0.1006, final: 0.1056, cls: 0.2587) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 20000/25000 | Loss: 0.4758 (init: 0.1015, final: 0.1052, cls: 0.2691) | LR: 4.00e-04 | Time: 0.7s
+  [Eval] Val Loss: 0.3951 (init: 0.0793, final: 0.0784)
+  [Eval] cls_acc: 0.892 | flip_rate(pp/raw/gap): 0.852/0.918/-0.066 | pos_cons(pp/raw/gap): 0.883/0.078/+0.805
+  [Snapshot] Saved epoch 20000 samples -> /home/hkcrc/yzjws/unified/checkpoints/0429_gated/snapshots/epoch_20000.npz
+  [Save] New best model (loss=0.4758) -> /home/hkcrc/yzjws/unified/checkpoints/0429_gated/checkpoint_best.pt
+  Epoch 20050/25000 | Loss: 0.4705 (init: 0.1026, final: 0.1051, cls: 0.2628) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 20100/25000 | Loss: 0.4666 (init: 0.1009, final: 0.1045, cls: 0.2612) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 20150/25000 | Loss: 0.4598 (init: 0.1009, final: 0.1038, cls: 0.2551) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 20200/25000 | Loss: 0.4676 (init: 0.1006, final: 0.1050, cls: 0.2621) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 20250/25000 | Loss: 0.4657 (init: 0.1018, final: 0.1045, cls: 0.2594) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 20300/25000 | Loss: 0.4728 (init: 0.1022, final: 0.1051, cls: 0.2655) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 20350/25000 | Loss: 0.4707 (init: 0.1022, final: 0.1057, cls: 0.2628) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 20400/25000 | Loss: 0.4681 (init: 0.1007, final: 0.1041, cls: 0.2633) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 20450/25000 | Loss: 0.4691 (init: 0.1029, final: 0.1044, cls: 0.2618) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 20500/25000 | Loss: 0.4738 (init: 0.1023, final: 0.1047, cls: 0.2668) | LR: 4.00e-04 | Time: 0.7s
+  [Eval] Val Loss: 0.3996 (init: 0.0798, final: 0.0769)
+  [Eval] cls_acc: 0.890 | flip_rate(pp/raw/gap): 0.926/0.930/-0.004 | pos_cons(pp/raw/gap): 0.934/0.062/+0.871
+  Epoch 20550/25000 | Loss: 0.4688 (init: 0.1018, final: 0.1046, cls: 0.2623) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 20600/25000 | Loss: 0.4683 (init: 0.1010, final: 0.1047, cls: 0.2625) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 20650/25000 | Loss: 0.4669 (init: 0.1008, final: 0.1034, cls: 0.2627) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 20700/25000 | Loss: 0.4694 (init: 0.1003, final: 0.1054, cls: 0.2638) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 20750/25000 | Loss: 0.4707 (init: 0.1021, final: 0.1043, cls: 0.2643) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 20800/25000 | Loss: 0.4625 (init: 0.0999, final: 0.1058, cls: 0.2568) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 20850/25000 | Loss: 0.4702 (init: 0.1006, final: 0.1060, cls: 0.2636) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 20900/25000 | Loss: 0.4633 (init: 0.1007, final: 0.1051, cls: 0.2575) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 20950/25000 | Loss: 0.4641 (init: 0.1009, final: 0.1041, cls: 0.2591) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 21000/25000 | Loss: 0.4641 (init: 0.1001, final: 0.1035, cls: 0.2605) | LR: 4.00e-04 | Time: 0.6s
+  [Eval] Val Loss: 0.3966 (init: 0.0800, final: 0.0775)
+  [Eval] cls_acc: 0.891 | flip_rate(pp/raw/gap): 0.852/0.910/-0.059 | pos_cons(pp/raw/gap): 0.898/0.098/+0.801
+  [Snapshot] Saved epoch 21000 samples -> /home/hkcrc/yzjws/unified/checkpoints/0429_gated/snapshots/epoch_21000.npz
+  Epoch 21050/25000 | Loss: 0.4635 (init: 0.1003, final: 0.1046, cls: 0.2586) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 21100/25000 | Loss: 0.4711 (init: 0.0996, final: 0.1021, cls: 0.2694) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 21150/25000 | Loss: 0.4650 (init: 0.1009, final: 0.1014, cls: 0.2627) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 21200/25000 | Loss: 0.4712 (init: 0.1007, final: 0.1046, cls: 0.2659) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 21250/25000 | Loss: 0.4698 (init: 0.1005, final: 0.1058, cls: 0.2635) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 21300/25000 | Loss: 0.4639 (init: 0.1014, final: 0.1038, cls: 0.2586) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 21350/25000 | Loss: 0.4642 (init: 0.0997, final: 0.1030, cls: 0.2615) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 21400/25000 | Loss: 0.4689 (init: 0.1008, final: 0.1043, cls: 0.2639) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 21450/25000 | Loss: 0.4658 (init: 0.1002, final: 0.1057, cls: 0.2599) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 21500/25000 | Loss: 0.4717 (init: 0.1019, final: 0.1041, cls: 0.2656) | LR: 4.00e-04 | Time: 0.7s
+  [Eval] Val Loss: 0.3944 (init: 0.0804, final: 0.0769)
+  [Eval] cls_acc: 0.892 | flip_rate(pp/raw/gap): 0.902/0.895/+0.008 | pos_cons(pp/raw/gap): 0.922/0.102/+0.820
+  Epoch 21550/25000 | Loss: 0.4663 (init: 0.1007, final: 0.1043, cls: 0.2613) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 21600/25000 | Loss: 0.4662 (init: 0.1024, final: 0.1032, cls: 0.2606) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 21650/25000 | Loss: 0.4729 (init: 0.1033, final: 0.1045, cls: 0.2651) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 21700/25000 | Loss: 0.4625 (init: 0.1002, final: 0.1051, cls: 0.2572) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 21750/25000 | Loss: 0.4611 (init: 0.1004, final: 0.1032, cls: 0.2576) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 21800/25000 | Loss: 0.4629 (init: 0.1004, final: 0.1051, cls: 0.2574) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 21850/25000 | Loss: 0.4687 (init: 0.0999, final: 0.1049, cls: 0.2639) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 21900/25000 | Loss: 0.4630 (init: 0.1010, final: 0.1030, cls: 0.2589) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 21950/25000 | Loss: 0.4644 (init: 0.1002, final: 0.1053, cls: 0.2590) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 22000/25000 | Loss: 0.4698 (init: 0.1027, final: 0.1035, cls: 0.2637) | LR: 4.00e-04 | Time: 0.7s
+  [Eval] Val Loss: 0.3894 (init: 0.0791, final: 0.0769)
+  [Eval] cls_acc: 0.891 | flip_rate(pp/raw/gap): 0.879/0.910/-0.031 | pos_cons(pp/raw/gap): 0.891/0.105/+0.785
+  [Snapshot] Saved epoch 22000 samples -> /home/hkcrc/yzjws/unified/checkpoints/0429_gated/snapshots/epoch_22000.npz
+  [Save] New best model (loss=0.4698) -> /home/hkcrc/yzjws/unified/checkpoints/0429_gated/checkpoint_best.pt
+  Epoch 22050/25000 | Loss: 0.4699 (init: 0.0994, final: 0.1052, cls: 0.2652) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 22100/25000 | Loss: 0.4726 (init: 0.1009, final: 0.1059, cls: 0.2658) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 22150/25000 | Loss: 0.4637 (init: 0.1006, final: 0.1034, cls: 0.2597) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 22200/25000 | Loss: 0.4668 (init: 0.1000, final: 0.1046, cls: 0.2622) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 22250/25000 | Loss: 0.4695 (init: 0.1011, final: 0.1049, cls: 0.2636) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 22300/25000 | Loss: 0.4667 (init: 0.0991, final: 0.1051, cls: 0.2625) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 22350/25000 | Loss: 0.4649 (init: 0.1015, final: 0.1048, cls: 0.2586) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 22400/25000 | Loss: 0.4590 (init: 0.1018, final: 0.1049, cls: 0.2523) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 22450/25000 | Loss: 0.4694 (init: 0.1032, final: 0.1028, cls: 0.2634) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 22500/25000 | Loss: 0.4658 (init: 0.1012, final: 0.1035, cls: 0.2610) | LR: 4.00e-04 | Time: 0.7s
+  [Eval] Val Loss: 0.4074 (init: 0.0802, final: 0.0795)
+  [Eval] cls_acc: 0.886 | flip_rate(pp/raw/gap): 0.910/0.941/-0.031 | pos_cons(pp/raw/gap): 0.926/0.102/+0.824
+  Epoch 22550/25000 | Loss: 0.4606 (init: 0.1005, final: 0.1040, cls: 0.2561) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 22600/25000 | Loss: 0.4649 (init: 0.1011, final: 0.1056, cls: 0.2582) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 22650/25000 | Loss: 0.4662 (init: 0.1002, final: 0.1043, cls: 0.2618) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 22700/25000 | Loss: 0.4721 (init: 0.1021, final: 0.1043, cls: 0.2658) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 22750/25000 | Loss: 0.4693 (init: 0.1033, final: 0.1037, cls: 0.2623) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 22800/25000 | Loss: 0.4657 (init: 0.1020, final: 0.1055, cls: 0.2582) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 22850/25000 | Loss: 0.4672 (init: 0.1014, final: 0.1052, cls: 0.2607) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 22900/25000 | Loss: 0.4671 (init: 0.0997, final: 0.1033, cls: 0.2641) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 22950/25000 | Loss: 0.4590 (init: 0.0999, final: 0.1030, cls: 0.2561) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 23000/25000 | Loss: 0.4624 (init: 0.1013, final: 0.1039, cls: 0.2572) | LR: 4.00e-04 | Time: 0.7s
+  [Eval] Val Loss: 0.4014 (init: 0.0823, final: 0.0799)
+  [Eval] cls_acc: 0.891 | flip_rate(pp/raw/gap): 0.887/0.906/-0.020 | pos_cons(pp/raw/gap): 0.902/0.121/+0.781
+  [Snapshot] Saved epoch 23000 samples -> /home/hkcrc/yzjws/unified/checkpoints/0429_gated/snapshots/epoch_23000.npz
+  Epoch 23050/25000 | Loss: 0.4676 (init: 0.1019, final: 0.1046, cls: 0.2611) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 23100/25000 | Loss: 0.4634 (init: 0.1020, final: 0.1027, cls: 0.2587) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 23150/25000 | Loss: 0.4629 (init: 0.1020, final: 0.1028, cls: 0.2582) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 23200/25000 | Loss: 0.4668 (init: 0.1017, final: 0.1030, cls: 0.2621) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 23250/25000 | Loss: 0.4692 (init: 0.1025, final: 0.1043, cls: 0.2624) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 23300/25000 | Loss: 0.4573 (init: 0.1003, final: 0.1037, cls: 0.2533) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 23350/25000 | Loss: 0.4706 (init: 0.1010, final: 0.1047, cls: 0.2649) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 23400/25000 | Loss: 0.4655 (init: 0.1017, final: 0.1045, cls: 0.2593) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 23450/25000 | Loss: 0.4663 (init: 0.1016, final: 0.1041, cls: 0.2606) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 23500/25000 | Loss: 0.4696 (init: 0.1018, final: 0.1050, cls: 0.2627) | LR: 4.00e-04 | Time: 0.7s
+  [Eval] Val Loss: 0.3902 (init: 0.0807, final: 0.0748)
+  [Eval] cls_acc: 0.893 | flip_rate(pp/raw/gap): 0.875/0.910/-0.035 | pos_cons(pp/raw/gap): 0.906/0.086/+0.820
+  Epoch 23550/25000 | Loss: 0.4616 (init: 0.1003, final: 0.1048, cls: 0.2565) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 23600/25000 | Loss: 0.4638 (init: 0.1007, final: 0.1036, cls: 0.2596) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 23650/25000 | Loss: 0.4610 (init: 0.0999, final: 0.1025, cls: 0.2586) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 23700/25000 | Loss: 0.4679 (init: 0.1010, final: 0.1039, cls: 0.2630) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 23750/25000 | Loss: 0.4660 (init: 0.0999, final: 0.1051, cls: 0.2610) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 23800/25000 | Loss: 0.4603 (init: 0.1002, final: 0.1037, cls: 0.2564) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 23850/25000 | Loss: 0.4674 (init: 0.0990, final: 0.1049, cls: 0.2636) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 23900/25000 | Loss: 0.4583 (init: 0.0999, final: 0.1042, cls: 0.2543) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 23950/25000 | Loss: 0.4644 (init: 0.1000, final: 0.1053, cls: 0.2591) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 24000/25000 | Loss: 0.4585 (init: 0.1014, final: 0.1031, cls: 0.2540) | LR: 4.00e-04 | Time: 0.7s
+  [Eval] Val Loss: 0.3893 (init: 0.0790, final: 0.0770)
+  [Eval] cls_acc: 0.894 | flip_rate(pp/raw/gap): 0.906/0.918/-0.012 | pos_cons(pp/raw/gap): 0.941/0.086/+0.855
+  [Snapshot] Saved epoch 24000 samples -> /home/hkcrc/yzjws/unified/checkpoints/0429_gated/snapshots/epoch_24000.npz
+  [Save] New best model (loss=0.4585) -> /home/hkcrc/yzjws/unified/checkpoints/0429_gated/checkpoint_best.pt
+  Epoch 24050/25000 | Loss: 0.4611 (init: 0.1003, final: 0.1018, cls: 0.2589) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 24100/25000 | Loss: 0.4622 (init: 0.1012, final: 0.1049, cls: 0.2561) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 24150/25000 | Loss: 0.4572 (init: 0.1003, final: 0.1024, cls: 0.2545) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 24200/25000 | Loss: 0.4610 (init: 0.1008, final: 0.1030, cls: 0.2571) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 24250/25000 | Loss: 0.4586 (init: 0.0994, final: 0.1037, cls: 0.2555) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 24300/25000 | Loss: 0.4603 (init: 0.0993, final: 0.1054, cls: 0.2555) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 24350/25000 | Loss: 0.4657 (init: 0.1015, final: 0.1059, cls: 0.2582) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 24400/25000 | Loss: 0.4659 (init: 0.0994, final: 0.1044, cls: 0.2621) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 24450/25000 | Loss: 0.4635 (init: 0.1022, final: 0.1061, cls: 0.2552) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 24500/25000 | Loss: 0.4646 (init: 0.1010, final: 0.1044, cls: 0.2592) | LR: 4.00e-04 | Time: 0.7s
+  [Eval] Val Loss: 0.3900 (init: 0.0805, final: 0.0762)
+  [Eval] cls_acc: 0.893 | flip_rate(pp/raw/gap): 0.895/0.883/+0.012 | pos_cons(pp/raw/gap): 0.926/0.121/+0.805
+  Epoch 24550/25000 | Loss: 0.4609 (init: 0.1009, final: 0.1031, cls: 0.2568) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 24600/25000 | Loss: 0.4682 (init: 0.1030, final: 0.1041, cls: 0.2610) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 24650/25000 | Loss: 0.4636 (init: 0.0999, final: 0.1047, cls: 0.2590) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 24700/25000 | Loss: 0.4668 (init: 0.0997, final: 0.1047, cls: 0.2624) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 24750/25000 | Loss: 0.4602 (init: 0.0998, final: 0.1031, cls: 0.2573) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 24800/25000 | Loss: 0.4598 (init: 0.1018, final: 0.1048, cls: 0.2532) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 24850/25000 | Loss: 0.4619 (init: 0.1010, final: 0.1031, cls: 0.2578) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 24900/25000 | Loss: 0.4591 (init: 0.0998, final: 0.1043, cls: 0.2551) | LR: 4.00e-04 | Time: 0.7s
+  Epoch 24950/25000 | Loss: 0.4598 (init: 0.0996, final: 0.1024, cls: 0.2578) | LR: 4.00e-04 | Time: 0.6s
+  Epoch 25000/25000 | Loss: 0.4669 (init: 0.0997, final: 0.1041, cls: 0.2631) | LR: 4.00e-04 | Time: 0.6s
+  [Eval] Val Loss: 0.3899 (init: 0.0785, final: 0.0778)
+  [Eval] cls_acc: 0.892 | flip_rate(pp/raw/gap): 0.883/0.918/-0.035 | pos_cons(pp/raw/gap): 0.898/0.102/+0.797
+  [Snapshot] Saved epoch 25000 samples -> /home/hkcrc/yzjws/unified/checkpoints/0429_gated/snapshots/epoch_25000.npz
+
+[Train] Training complete. Final model saved to /home/hkcrc/yzjws/unified/checkpoints/0429_gated/checkpoint_final.pt
+  Best loss: 0.4585

@@ -292,11 +292,13 @@ class UnifiedTransitionDataset(Dataset):
         normalize: bool = True,
         augment: bool = True,
         use_orientation: bool = True,
+        clean_non_flip: bool = True,
     ):
         self.data_path = Path(data_path)
         self.normalize = normalize
         self.augment = augment
         self.use_orientation = use_orientation
+        self.clean_non_flip = clean_non_flip
 
         # Load raw data
         with open(self.data_path, 'r') as f:
@@ -311,6 +313,15 @@ class UnifiedTransitionDataset(Dataset):
             self._load_pair_format(raw_data)
         else:
             raise ValueError(f"Unknown data format in {data_path}")
+
+        # ---- Data cleaning: enforce single-effector change prior ----
+        # SEIKO data is supposed to satisfy "exactly one effector flips contact
+        # and only that effector's pose changes". In practice the other 3
+        # effectors drift by ~mm due to optimization noise. We force them to be
+        # byte-identical between initial and final so the supervision signal
+        # for the "non-changed effector" prior is clean.
+        if self.clean_non_flip:
+            self._clean_non_flip_effectors()
 
         # Pool all configs for normalization
         all_configs = np.concatenate([self.initials, self.finals], axis=0)
@@ -415,6 +426,66 @@ class UnifiedTransitionDataset(Dataset):
         self.initials_norm = np.concatenate([self.initials_norm, reverse_initials], axis=0)
         self.finals_norm = np.concatenate([self.finals_norm, reverse_finals], axis=0)
 
+    def _clean_non_flip_effectors(self):
+        """
+        Force non-flipping effectors to be byte-identical between initial and final.
+
+        For each pair, identify which effector flipped its contact bit. For all
+        OTHER effectors, copy initial[..effector_dims..] -> final[..effector_dims..].
+        Pairs with not-exactly-1 contact flip are kept as-is (rare; data is
+        supposed to be single-flip but defensive).
+
+        Stats are printed so users can see how much drift was removed.
+        """
+        if self.use_orientation:
+            # 22D: LF[0:6], RF[6:12], LH[12:15], RH[15:18], contacts[18:22]
+            eff_slices = [(0, 6), (6, 12), (12, 15), (15, 18)]
+            contact_start = 18
+        else:
+            # 16D: LF[0:3], RF[3:6], LH[6:9], RH[9:12], contacts[12:16]
+            eff_slices = [(0, 3), (3, 6), (6, 9), (9, 12)]
+            contact_start = 12
+
+        N = self.initials.shape[0]
+        ci = self.initials[:, contact_start:contact_start + 4]
+        cf = self.finals[:, contact_start:contact_start + 4]
+        flip_mask = (ci != cf)                 # (N, 4)
+        num_flips = flip_mask.sum(axis=1)      # (N,)
+        flip_idx = flip_mask.argmax(axis=1)    # (N,) — only valid where num_flips == 1
+
+        # Measure pre-clean drift on non-flipping effectors (for logging)
+        pre_drift_max = 0.0
+        pre_drift_mean_list = []
+        cleaned_count = 0
+
+        for n in range(N):
+            if num_flips[n] != 1:
+                continue
+            cleaned_count += 1
+            for e in range(4):
+                if e == flip_idx[n]:
+                    continue
+                s, end = eff_slices[e]
+                d = np.linalg.norm(self.finals[n, s:end] - self.initials[n, s:end])
+                pre_drift_mean_list.append(d)
+                if d > pre_drift_max:
+                    pre_drift_max = d
+                # Force final == initial on this effector's pose dims
+                self.finals[n, s:end] = self.initials[n, s:end]
+
+        if pre_drift_mean_list:
+            pre_drift_mean = float(np.mean(pre_drift_mean_list))
+            pre_drift_p99 = float(np.percentile(pre_drift_mean_list, 99))
+        else:
+            pre_drift_mean = 0.0
+            pre_drift_p99 = 0.0
+
+        skipped = N - cleaned_count
+        print(f"[Dataset] clean_non_flip: cleaned {cleaned_count}/{N} pairs "
+              f"(skipped {skipped} non-single-flip pairs); "
+              f"pre-clean drift on non-flip effectors -> "
+              f"mean={pre_drift_mean:.4f} p99={pre_drift_p99:.4f} max={pre_drift_max:.4f}")
+
     def __len__(self):
         return len(self.initials_norm)
 
@@ -430,6 +501,7 @@ def create_dataloader(
     use_orientation: bool = True,
     num_workers: int = 0,
     shuffle: bool = True,
+    clean_non_flip: bool = True,
 ) -> Tuple[DataLoader, UnifiedTransitionDataset]:
     """Create a DataLoader for the unified transition dataset."""
     dataset = UnifiedTransitionDataset(
@@ -437,6 +509,7 @@ def create_dataloader(
         normalize=normalize,
         augment=augment,
         use_orientation=use_orientation,
+        clean_non_flip=clean_non_flip,
     )
     dataloader = DataLoader(
         dataset,

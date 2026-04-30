@@ -8,10 +8,8 @@
 
 使用方式:
   python visualization/analysis_plots.py \
-      --checkpoint checkpoints/checkpoint_best.pt \
-      --data dataset/balance_dataset.json \
-      --chain_output outputs/seiko_chain_ee_test5.json \
-      --output_dir visualization/figures
+      --chain_output outputs/seiko_chain_0428_test8.json \
+      --output_dir visualization/figures/0429
 """
 
 import sys

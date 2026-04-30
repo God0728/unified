@@ -117,15 +117,42 @@ START_STATE="...your 22D start state..."
 GOAL_STATE="...your 22D goal state..."
 
 python scripts/sample.py \
-    --checkpoint /home/crc/jimmy/unified_module/unified/checkpoints/test0411_50000/checkpoint_best.pt\
+    --checkpoint checkpoints/0428_v2/checkpoint_best.pt\
     --mode chain \
     --start="1.45267e-11,3.01423e-12,3.30277e-13,1.45525e-11,-0.17,-1.57152e-13,0.415559,0.264454,0.971211,0.425521,-0.424698,0.924157,1,1,0,0" \
     --goal="0.234402,-0.000106034,0.000132038,0.219698,-0.257853,0.00024149,0.688516,0.263693,0.971066,0.582762,-0.425193,0.923607,1,1,0,0" \
-    --num_transitions 4 \
+    --num_transitions 6 \
     --num_samples 8 \
     --guidance_scale 4.0 \
-    --output outputs/seiko_chain_0413_test1.json
+    --output outputs/seiko_chain_0428_test1.json
 ```
+```bash
+python scripts/sample.py \
+    --checkpoint checkpoints/0428_v2/checkpoint_best.pt\
+    --mode chain \
+    --start="-7.95837e-17, -6.65266e-18,  6.93889e-17,-6.07421e-17,-0.17, 2.35922e-16,0.415559 ,0.264454, 0.971211,0.425521,-0.424698,0.924157,1,1,0,0" \
+    --goal="0.346625,-0.000102918,0.0111614 ,1.27825e-13, -0.17,2.45577e-12, 0.62678,0.26376,0.972921, 0.821735,-0.557251, 0.926407, 1, 1, 1 ,1" \
+    --num_transitions 6 \
+    --num_samples 30 \
+    --guidance_scale 4.0 \
+    --output outputs/seiko_chain_0428_test5.json
+
+```
+```bash
+python scripts/sample.py \
+    --checkpoint checkpoints/0429_gated/checkpoint_best.pt\
+    --mode chain \
+    --start="-7.95837e-17, -6.65266e-18,  6.93889e-17,-6.07421e-17,-0.17, 2.35922e-16,0.415559 ,0.264454, 0.971211,0.425521,-0.424698,0.924157,1,1,0,0" \
+    --goal="0.268628,0.141555,0.0002,0.311573,-0.169977,0.00018,0.8808, 0.264683, 0.971488,0.63043, -0.42424, 0.925591, 1, 1, 0,1" \
+    --num_transitions 8 \
+    --num_samples 50 \
+    --guidance_scale 4.0 \
+    --output outputs/seiko_chain_0428_test9.json
+
+```
+
+
+
 
 cd /home/crc/jimmy/unified_module/unified && python scripts/sample.py     
 --checkpoint checkpoints/seiko_talos_3000_0325/checkpoint_best.pt     --mode chain     --start="1.45267e-11,3.01423e-12,3.30277e-13,1.91885e-08,-8.3791e-08,1.63046e-08,1.45525e-11,-0.17,-1.57152e-13,1.91885e-08,-8.3791e-08,1.62907e-08,0.415559,0.264454,0.971211,0.425521,-0.424698,0.924157,1,1,0,0"     --goal="0.234402,-0.000106034,0.000132038,0.000253223,-0.000362294,2.2021e-05,0.219698,-0.257853,0.00024149,-0.000319312,-6.65064e-05,-3.21198e-05,0.688516,0.263693,0.971066,0.582762,-0.425193,0.923607,1,1,0,0"     --num_transitions 4     --num_samples 8     --chain_mode parallel     --guidance_scale 4.0     --output outputs/seiko_chain_ee_test3.json
