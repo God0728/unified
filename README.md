@@ -174,29 +174,3 @@ This is an excellent way to understand the full capabilities of the project. All
 [1] Zhu, C., et al. (2025). *Unified World Models: Coupling Video and Action Diffusion for Pretraining on Large Robotic Datasets*. arXiv:2504.02792.
 
 [2] Luo, Y., et al. (2025). *Generative Trajectory Stitching through Diffusion Composition*. arXiv:2503.05153.
-
-## 7. Mini VLA Extension
-
-This repository now also contains a compact **Mini VLA (Vision-Language-Action)** stack under `mini_vla/`. It is designed as a practical learning and experimentation scaffold for end-to-end VLA development while keeping the original unified transition diffusion code intact.
-
-| Component | Path | Purpose |
-| --- | --- | --- |
-| Architecture guide | `docs/mini_vla_design.md` | Explains the model design, training stages and extension roadmap. |
-| Quickstart | `docs/mini_vla_quickstart.md` | Provides pretraining, fine-tuning and GPU running instructions. |
-| Pretraining config | `configs/mini_vla_pretrain.yaml` | Runs a synthetic VLA pretraining pipeline. |
-| Fine-tuning config | `configs/mini_vla_finetune_lerobot.yaml` | Adapts Hugging Face/LeRobot-style robot datasets or local JSONL data. |
-| Pretraining script | `scripts/pretrain_mini_vla.py` | Trains the Mini VLA model from scratch on synthetic VLA data. |
-| Fine-tuning script | `scripts/finetune_mini_vla.py` | Initializes from a checkpoint and trains on robot demonstrations. |
-
-A minimal smoke test can be run with:
-
-```bash
-python scripts/pretrain_mini_vla.py \
-  --config configs/mini_vla_pretrain.yaml \
-  --override train.device=cpu \
-  --override train.steps=5 \
-  --override train.batch_size=4 \
-  --override data.train.num_samples=64
-```
-
-For a more complete explanation, see [`docs/mini_vla_quickstart.md`](docs/mini_vla_quickstart.md).
